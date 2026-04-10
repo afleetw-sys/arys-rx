@@ -4,6 +4,8 @@ module.exports = function (api) {
     presets: [
       ['babel-preset-expo', { jsxImportSource: 'nativewind' }],
     ],
-    plugins: ['nativewind/babel'],
+    // NativeWind 4 does not use a babel plugin — the CSS transform is
+    // handled by withNativeWind() in metro.config.js and the JSX
+    // transform by jsxImportSource above.
   };
 };
