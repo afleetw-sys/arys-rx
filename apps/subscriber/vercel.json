@@ -2,5 +2,8 @@
   "buildCommand": "../../node_modules/.bin/expo export --platform web",
   "installCommand": "cd ../.. && npm install",
   "outputDirectory": "dist",
-  "framework": null
+  "framework": null,
+  "rewrites": [
+    { "source": "/((?!_expo|assets|favicon\\.ico).*)", "destination": "/index.html" }
+  ]
 }
