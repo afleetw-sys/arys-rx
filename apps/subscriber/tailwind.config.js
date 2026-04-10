@@ -7,5 +7,6 @@ module.exports = {
     './components/**/*.{js,jsx,ts,tsx}',
     '../../packages/ui/src/**/*.{js,jsx,ts,tsx}',
   ],
-  presets: [uiPreset],
+  // nativewind/preset must come first — NativeWind validates its presence at startup
+  presets: [require('nativewind/preset'), uiPreset],
 };
