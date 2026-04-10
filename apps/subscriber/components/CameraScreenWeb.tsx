@@ -64,7 +64,6 @@ export function CameraScreenWeb({ onRecordingComplete }: Props) {
 
   return (
     <View className="flex-1 bg-black items-center justify-center gap-6">
-      {/* @ts-expect-error — web-only <video> element */}
       <video
         ref={videoRef}
         autoPlay

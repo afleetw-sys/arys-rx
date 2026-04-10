@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd ../.. && ./node_modules/.bin/turbo build --filter=dashboard",
+  "buildCommand": "../../node_modules/.bin/next build",
   "installCommand": "cd ../.. && npm install",
   "framework": "nextjs"
 }

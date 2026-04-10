@@ -2,6 +2,7 @@
   "extends": "@arys-rx/tsconfig/expo.json",
   "compilerOptions": {
     "baseUrl": ".",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "paths": {
       "@/*": ["./*"]
     }
