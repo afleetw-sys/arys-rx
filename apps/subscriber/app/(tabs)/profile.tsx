@@ -11,31 +11,63 @@ const MOCK_USER = {
   enrolledAt: '2024-01-15',
 };
 
-export default function ProfileScreen() {
+function ProfileRow({ label, value }: { label: string; value: string }) {
   return (
-    <SafeAreaView className="flex-1 bg-neutral-50">
-      <View className="px-4 py-6 gap-4">
-        {/* Avatar */}
-        <View className="items-center gap-2 mb-2">
-          <View className="w-20 h-20 rounded-full bg-brand-100 items-center justify-center">
-            <Text className="text-3xl font-bold text-brand-600">
-              {MOCK_USER.firstName[0]}{MOCK_USER.lastName[0]}
-            </Text>
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 2,
+      }}
+    >
+      <Text style={{ color: '#94a3b8', fontSize: 14 }}>{label}</Text>
+      <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '600' }}>{value}</Text>
+    </View>
+  );
+}
+
+export default function ProfileScreen() {
+  const initials = `${MOCK_USER.firstName[0]}${MOCK_USER.lastName[0]}`;
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: 24, gap: 20 }}>
+        {/* Avatar block */}
+        <View style={{ alignItems: 'center', gap: 10, marginBottom: 4 }}>
+          <View
+            style={{
+              width: 80,
+              height: 80,
+              borderRadius: 40,
+              backgroundColor: '#0f172a',
+              alignItems: 'center',
+              justifyContent: 'center',
+              shadowColor: '#0f172a',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.18,
+              shadowRadius: 12,
+              elevation: 6,
+            }}
+          >
+            <Text style={{ color: '#7dd3fc', fontSize: 26, fontWeight: '800' }}>{initials}</Text>
           </View>
-          <Text className="text-xl font-bold text-neutral-900">
+          <Text style={{ fontSize: 20, fontWeight: '800', color: '#0f172a' }}>
             {MOCK_USER.firstName} {MOCK_USER.lastName}
           </Text>
-          <Text className="text-neutral-500">{MOCK_USER.email}</Text>
+          <Text style={{ fontSize: 14, color: '#94a3b8' }}>{MOCK_USER.email}</Text>
         </View>
 
-        {/* Details */}
+        {/* Details card */}
         <Card>
-          <View className="gap-3">
+          <View style={{ gap: 14 }}>
             <ProfileRow label="Member ID" value={MOCK_USER.memberId} />
+            <View style={{ height: 1, backgroundColor: '#f1f5f9' }} />
             <ProfileRow label="Enrolled since" value={MOCK_USER.enrolledAt} />
           </View>
         </Card>
 
+        {/* Sign out */}
         <Button
           label="Sign out"
           onPress={() => router.replace('/(auth)/sign-in')}
@@ -44,14 +76,5 @@ export default function ProfileScreen() {
         />
       </View>
     </SafeAreaView>
-  );
-}
-
-function ProfileRow({ label, value }: { label: string; value: string }) {
-  return (
-    <View className="flex-row justify-between items-center">
-      <Text className="text-neutral-500 text-sm">{label}</Text>
-      <Text className="text-neutral-800 font-medium text-sm">{value}</Text>
-    </View>
   );
 }

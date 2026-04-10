@@ -4,22 +4,41 @@ import { Button } from '@arys-rx/ui';
 
 export default function SignInScreen() {
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <View className="flex-1 items-center justify-center px-6 gap-6">
-        <View className="items-center gap-2">
-          <View className="w-16 h-16 rounded-2xl bg-brand-600 items-center justify-center">
-            <Text className="text-white text-2xl font-bold">Rx</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0f172a' }}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }}>
+        {/* Logo */}
+        <View style={{ alignItems: 'center', marginBottom: 48 }}>
+          <View
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: 20,
+              backgroundColor: '#0284c7',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 20,
+              shadowColor: '#0284c7',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.4,
+              shadowRadius: 20,
+              elevation: 12,
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800' }}>Rx</Text>
           </View>
-          <Text className="text-2xl font-bold text-neutral-900">arys-rx</Text>
-          <Text className="text-neutral-500 text-center">
-            Medication adherence tracking
+          <Text style={{ color: '#fff', fontSize: 28, fontWeight: '800', letterSpacing: -0.5, marginBottom: 8 }}>
+            arys·rx
+          </Text>
+          <Text style={{ color: '#64748b', fontSize: 15, textAlign: 'center', lineHeight: 22 }}>
+            Medication adherence,{'\n'}made simple.
           </Text>
         </View>
 
-        <View className="w-full gap-3 mt-4">
+        {/* CTAs */}
+        <View style={{ width: '100%', gap: 12 }}>
           {/* TODO: Replace with Clerk SignIn component */}
           <Button
-            label="Sign in (demo)"
+            label="Sign in"
             onPress={() => router.replace('/(tabs)/')}
             fullWidth
           />
@@ -30,6 +49,11 @@ export default function SignInScreen() {
             fullWidth
           />
         </View>
+
+        {/* Footer note */}
+        <Text style={{ color: '#334155', fontSize: 12, marginTop: 32, textAlign: 'center' }}>
+          Protected health information is encrypted{'\n'}and stored securely.
+        </Text>
       </View>
     </SafeAreaView>
   );

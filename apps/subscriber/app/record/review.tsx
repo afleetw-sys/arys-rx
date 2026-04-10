@@ -2,8 +2,7 @@ import { submitAdherenceRecord } from '../../lib/api';
 import { Button, Card } from '@arys-rx/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native';
+import { Alert, SafeAreaView, Text, View } from 'react-native';
 
 export default function ReviewScreen() {
   const { uri } = useLocalSearchParams<{ uri: string }>();
@@ -28,28 +27,52 @@ export default function ReviewScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-neutral-900">
-      <View className="flex-1 px-4 py-6 gap-4">
-        {/* Video preview placeholder */}
-        <View className="flex-1 bg-neutral-800 rounded-2xl items-center justify-center">
-          <Text className="text-neutral-400 text-4xl mb-2">🎬</Text>
-          <Text className="text-neutral-400 text-sm">
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#0f172a' }}>
+      <View style={{ flex: 1, paddingHorizontal: 20, paddingTop: 20, paddingBottom: 28, gap: 16 }}>
+        {/* Video preview area */}
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: '#1e293b',
+            borderRadius: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+          }}
+        >
+          <Text style={{ fontSize: 44 }}>🎬</Text>
+          <Text style={{ color: '#64748b', fontSize: 15, fontWeight: '500' }}>
             {uri ? 'Recording ready' : 'No recording'}
           </Text>
           {uri ? (
-            <Text className="text-neutral-600 text-xs mt-1 px-8 text-center" numberOfLines={2}>
+            <Text
+              style={{ color: '#334155', fontSize: 11, paddingHorizontal: 32, textAlign: 'center' }}
+              numberOfLines={2}
+            >
               {uri}
             </Text>
           ) : null}
         </View>
 
+        {/* Drug info card */}
         <Card>
-          <Text className="text-sm font-medium text-neutral-700 mb-1">Submitting for</Text>
-          <Text className="text-lg font-bold text-neutral-900">Humira</Text>
-          <Text className="text-neutral-500 text-sm">{new Date().toLocaleDateString()}</Text>
+          <Text style={{ fontSize: 12, fontWeight: '600', color: '#94a3b8', marginBottom: 6 }}>
+            Submitting for
+          </Text>
+          <Text style={{ fontSize: 18, fontWeight: '800', color: '#0f172a', marginBottom: 2 }}>
+            Humira
+          </Text>
+          <Text style={{ fontSize: 14, color: '#94a3b8' }}>
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </Text>
         </Card>
 
-        <View className="gap-3">
+        {/* Actions */}
+        <View style={{ gap: 12 }}>
           <Button
             label={submitting ? 'Submitting…' : 'Submit Adherence Record'}
             onPress={handleSubmit}

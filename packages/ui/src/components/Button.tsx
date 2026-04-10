@@ -14,7 +14,7 @@ const variantStyles: Record<Variant, { container: string; text: string }> = {
   primary: { container: 'bg-brand-600', text: 'text-white' },
   secondary: { container: 'bg-neutral-100 border border-neutral-200', text: 'text-neutral-800' },
   ghost: { container: 'bg-transparent', text: 'text-brand-600' },
-  danger: { container: 'bg-danger-600', text: 'text-white' },
+  danger: { container: 'bg-danger-500', text: 'text-white' },
 };
 
 export function Button({
@@ -30,9 +30,9 @@ export function Button({
       onPress={onPress}
       disabled={disabled}
       className={[
-        'rounded-xl px-6 py-3 items-center justify-center',
+        'rounded-2xl px-6 py-4 items-center justify-center',
         styles.container,
-        disabled && 'opacity-50',
+        disabled && 'opacity-40',
         fullWidth && 'w-full',
       ]
         .filter(Boolean)

@@ -1,8 +1,22 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 
-function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
-  return <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.5 }}>{emoji}</Text>;
+function TabIcon({ icon, focused }: { icon: string; focused: boolean }) {
+  return (
+    <View style={{ alignItems: 'center', gap: 4 }}>
+      <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.4 }}>{icon}</Text>
+      {focused && (
+        <View
+          style={{
+            width: 4,
+            height: 4,
+            borderRadius: 2,
+            backgroundColor: '#0284c7',
+          }}
+        />
+      )}
+    </View>
+  );
 }
 
 export default function TabsLayout() {
@@ -11,31 +25,39 @@ export default function TabsLayout() {
       screenOptions={{
         tabBarActiveTintColor: '#0284c7',
         tabBarInactiveTintColor: '#94a3b8',
-        tabBarStyle: { borderTopColor: '#e2e8f0' },
-        headerStyle: { backgroundColor: '#0284c7' },
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          backgroundColor: '#ffffff',
+          borderTopColor: '#f1f5f9',
+          borderTopWidth: 1,
+          height: Platform.OS === 'ios' ? 84 : 64,
+          paddingBottom: Platform.OS === 'ios' ? 26 : 10,
+          paddingTop: 8,
+        },
+        headerStyle: { backgroundColor: '#0f172a' },
         headerTintColor: '#fff',
-        headerTitleStyle: { fontWeight: 'bold' },
+        headerTitleStyle: { fontWeight: '700', fontSize: 17 },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Today',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="💊" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="💊" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="history"
         options={{
           title: 'History',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📋" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="📋" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ focused }) => <TabIcon emoji="👤" focused={focused} />,
+          tabBarIcon: ({ focused }) => <TabIcon icon="👤" focused={focused} />,
         }}
       />
     </Tabs>
