@@ -1,0 +1,7 @@
+{
+  "extends": "@arys-rx/tsconfig/expo.json",
+  "compilerOptions": {
+    "outDir": "dist"
+  },
+  "include": ["src", "nativewind-env.d.ts"]
+}

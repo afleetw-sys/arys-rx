@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "arys-rx",
+    "slug": "arys-rx-subscriber",
+    "version": "1.0.0",
+    "scheme": "arys-rx",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0284c7"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.arysrx.subscriber"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0284c7"
+      },
+      "package": "com.arysrx.subscriber"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-router", "expo-camera"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
