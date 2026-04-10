@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd ../.. && npx turbo build --filter=subscriber",
+  "buildCommand": "cd ../.. && ./node_modules/.bin/turbo build --filter=subscriber",
   "installCommand": "cd ../.. && npm install",
   "outputDirectory": "dist",
   "framework": null
