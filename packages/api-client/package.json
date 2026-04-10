@@ -10,10 +10,10 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "@arys-rx/types": "workspace:*"
+    "@arys-rx/types": "*"
   },
   "devDependencies": {
-    "@arys-rx/tsconfig": "workspace:*",
+    "@arys-rx/tsconfig": "*",
     "typescript": "^5.6.3"
   }
 }

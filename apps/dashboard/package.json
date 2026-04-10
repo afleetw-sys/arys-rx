@@ -10,14 +10,14 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@arys-rx/api-client": "workspace:*",
-    "@arys-rx/types": "workspace:*",
+    "@arys-rx/api-client": "*",
+    "@arys-rx/types": "*",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
-    "@arys-rx/tsconfig": "workspace:*",
+    "@arys-rx/tsconfig": "*",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",

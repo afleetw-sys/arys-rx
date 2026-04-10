@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd ../.. && pnpm turbo build --filter=dashboard",
-  "installCommand": "corepack enable pnpm && cd ../.. && pnpm install",
+  "buildCommand": "cd ../.. && npx turbo build --filter=dashboard",
+  "installCommand": "cd ../.. && npm install",
   "framework": "nextjs"
 }

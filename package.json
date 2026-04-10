@@ -1,6 +1,11 @@
 {
   "name": "arys-rx",
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "tooling/*"
+  ],
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -13,6 +18,5 @@
     "prettier": "^3.3.3",
     "turbo": "^2.3.3",
     "typescript": "^5.6.3"
-  },
-  "packageManager": "pnpm@9.14.2"
+  }
 }

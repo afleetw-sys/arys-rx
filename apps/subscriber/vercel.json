@@ -1,6 +1,6 @@
 {
-  "buildCommand": "cd ../.. && pnpm turbo build --filter=subscriber",
+  "buildCommand": "cd ../.. && npx turbo build --filter=subscriber",
+  "installCommand": "cd ../.. && npm install",
   "outputDirectory": "dist",
-  "installCommand": "corepack enable pnpm && cd ../.. && pnpm install",
   "framework": null
 }
