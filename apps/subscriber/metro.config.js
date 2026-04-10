@@ -19,7 +19,17 @@ config.resolver.nodeModulesPaths = [
 // Follow symlinks created by npm workspaces
 config.resolver.unstable_enableSymlinks = true;
 
-// Respect the "exports" field in package.json
-config.resolver.unstable_enablePackageExports = true;
+// Do NOT enable unstable_enablePackageExports — it causes Metro to resolve
+// `react` via the exports field differently for different callers, producing
+// two React module IDs with separate dispatcher instances. Each @arys-rx/*
+// package already has a "main" field so exports resolution isn't needed.
+
+// Pin all react/react-native imports to a single root copy so Metro never
+// produces two instances (which would make useState throw on a null dispatcher).
+config.resolver.extraNodeModules = {
+  react: path.resolve(workspaceRoot, 'node_modules/react'),
+  'react-dom': path.resolve(workspaceRoot, 'node_modules/react-dom'),
+  'react-native': path.resolve(workspaceRoot, 'node_modules/react-native'),
+};
 
 module.exports = withNativeWind(config, { input: './global.css' });
