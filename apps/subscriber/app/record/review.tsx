@@ -1,4 +1,4 @@
-import { submitAdherenceRecord } from '@/lib/api';
+import { submitAdherenceRecord } from '../../lib/api';
 import { Button, Card } from '@arys-rx/ui';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';

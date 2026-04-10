@@ -1,4 +1,4 @@
-import { getAllAdherenceHistory } from '@/lib/api';
+import { getAllAdherenceHistory } from '../../lib/api';
 import { AdherenceDot, Badge, Card } from '@arys-rx/ui';
 import type { AdherenceRecord } from '@arys-rx/types';
 import { useEffect, useState } from 'react';
@@ -38,7 +38,7 @@ export default function HistoryScreen() {
       <FlatList
         data={records.filter((r) => r.status !== 'pending')}
         keyExtractor={(item) => item.id}
-        contentContainerClassName="px-4 py-6 gap-3"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 24, gap: 12 }}
         ListHeaderComponent={
           <View className="mb-2">
             <Card>

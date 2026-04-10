@@ -1,4 +1,4 @@
-import { getAllAdherenceHistory } from '@/lib/api';
+import { getAllAdherenceHistory } from '../../lib/api';
 import { AdherenceDot, Button, Card } from '@arys-rx/ui';
 import type { AdherenceRecord } from '@arys-rx/types';
 import { router } from 'expo-router';
