@@ -82,14 +82,36 @@ export default function ProfileScreen() {
           elevation: 1,
         }}
       >
-        <Text style={{ fontSize: 11, fontWeight: '700', color: '#94a3b8', letterSpacing: 0.8, textTransform: 'uppercase', paddingTop: 14, paddingBottom: 4 }}>
+        <Text
+          style={{
+            fontSize: 11,
+            fontWeight: '700',
+            color: '#94a3b8',
+            letterSpacing: 0.8,
+            textTransform: 'uppercase',
+            paddingTop: 14,
+            paddingBottom: 4,
+          }}
+        >
           Account
         </Text>
         <Row label="Member ID" value={MOCK_USER.memberId} />
-        <Row label="Enrolled since" value={MOCK_USER.enrolledAt} />
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingVertical: 13,
+          }}
+        >
+          <Text style={{ color: '#64748b', fontSize: 14 }}>Enrolled since</Text>
+          <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '600' }}>
+            {MOCK_USER.enrolledAt}
+          </Text>
+        </View>
       </View>
 
-      {/* Medication schedule */}
+      {/* Medication schedule (read-only summary) */}
       <View
         style={{
           backgroundColor: '#fff',
@@ -104,7 +126,17 @@ export default function ProfileScreen() {
           elevation: 1,
         }}
       >
-        <Text style={{ fontSize: 11, fontWeight: '700', color: '#94a3b8', letterSpacing: 0.8, textTransform: 'uppercase', paddingTop: 14, paddingBottom: 4 }}>
+        <Text
+          style={{
+            fontSize: 11,
+            fontWeight: '700',
+            color: '#94a3b8',
+            letterSpacing: 0.8,
+            textTransform: 'uppercase',
+            paddingTop: 14,
+            paddingBottom: 4,
+          }}
+        >
           Medication Schedule
         </Text>
         <Row label="Medication" value={`${MOCK_USER.drug} ${MOCK_USER.dosage}`} />
@@ -118,34 +150,11 @@ export default function ProfileScreen() {
           }}
         >
           <Text style={{ color: '#64748b', fontSize: 14 }}>Dose time</Text>
-          <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '600' }}>{MOCK_USER.doseTime}</Text>
+          <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '600' }}>
+            {MOCK_USER.doseTime}
+          </Text>
         </View>
       </View>
-
-      {/* Update schedule */}
-      <Pressable
-        onPress={() => router.push('/onboarding')}
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: 14,
-          borderWidth: 1,
-          borderColor: '#e2e8f0',
-          padding: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.04,
-          shadowRadius: 4,
-          elevation: 1,
-        }}
-      >
-        <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a' }}>
-          Update medication schedule
-        </Text>
-        <Text style={{ fontSize: 18, color: BRAND }}>→</Text>
-      </Pressable>
 
       {/* Sign out */}
       <Pressable

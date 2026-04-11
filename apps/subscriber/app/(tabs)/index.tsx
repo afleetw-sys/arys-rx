@@ -18,6 +18,7 @@ const MOCK_USER = {
   lastName: 'Doe',
   drug: 'Humira',
   dosage: '40mg/0.8mL',
+  frequency: 'Every 2 weeks',
 };
 
 function fmtDate(date: Date, opts: Intl.DateTimeFormatOptions) {
@@ -59,7 +60,6 @@ export default function HomeScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: BRAND }}>
       {/* ── Blue header ── */}
       <View style={{ backgroundColor: BRAND, paddingHorizontal: 20, paddingTop: 14, paddingBottom: 20 }}>
-        {/* App name + adherence rate */}
         <View
           style={{
             flexDirection: 'row',
@@ -86,7 +86,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Welcome card — tap to open profile */}
+        {/* Welcome card — tap for profile */}
         <Pressable onPress={() => router.push('/(tabs)/profile')}>
           <View
             style={{
@@ -110,7 +110,6 @@ export default function HomeScreen() {
                 {MOCK_USER.drug} · {MOCK_USER.dosage}
               </Text>
             </View>
-            {/* Avatar */}
             <View
               style={{
                 width: 40,
@@ -128,13 +127,13 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      {/* ── Scrollable content ── */}
+      {/* ── Content ── */}
       <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 20,
-            paddingBottom: 100, // room for FAB
+            paddingBottom: 100,
             gap: 20,
           }}
         >
@@ -153,7 +152,6 @@ export default function HomeScreen() {
               elevation: 2,
             }}
           >
-            {/* Blue top section */}
             <View style={{ backgroundColor: BRAND, padding: 18 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
                 <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13 }}>🕐</Text>
@@ -181,7 +179,6 @@ export default function HomeScreen() {
               )}
             </View>
 
-            {/* Medication row */}
             <View style={{ padding: 18, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}>
               <Text style={{ color: '#94a3b8', fontSize: 12, marginBottom: 5 }}>Medication</Text>
               <Text style={{ color: '#0f172a', fontSize: 16, fontWeight: '600' }}>
@@ -189,7 +186,6 @@ export default function HomeScreen() {
               </Text>
             </View>
 
-            {/* Record Dose button */}
             <View style={{ padding: 14 }}>
               <Pressable
                 onPress={() => router.push('/record/camera')}
@@ -210,10 +206,42 @@ export default function HomeScreen() {
           </View>
 
           {/* Upcoming Doses */}
-          <Text style={{ fontSize: 17, fontWeight: '700', color: '#0f172a' }}>Upcoming Doses</Text>
+          <Text style={{ fontSize: 17, fontWeight: '700', color: '#0f172a' }}>
+            Upcoming Doses
+          </Text>
 
           {pending.length === 0 ? (
-            <Text style={{ color: '#94a3b8', fontSize: 14 }}>No upcoming doses scheduled.</Text>
+            <View
+              style={{
+                backgroundColor: '#fff',
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: '#e2e8f0',
+                padding: 20,
+                alignItems: 'center',
+                gap: 12,
+              }}
+            >
+              <Text style={{ color: '#94a3b8', fontSize: 14 }}>
+                No upcoming doses scheduled.
+              </Text>
+              <Pressable
+                onPress={() => router.push('/onboarding')}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 4,
+                  backgroundColor: '#eff6ff',
+                  borderRadius: 8,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                }}
+              >
+                <Text style={{ fontSize: 13, fontWeight: '600', color: BRAND }}>
+                  Set up schedule
+                </Text>
+              </Pressable>
+            </View>
           ) : (
             <View
               style={{
@@ -229,6 +257,44 @@ export default function HomeScreen() {
                 elevation: 1,
               }}
             >
+              {/* Medication header row with edit button */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: 14,
+                  borderBottomWidth: 1,
+                  borderBottomColor: '#f1f5f9',
+                  backgroundColor: '#fafafa',
+                }}
+              >
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#0f172a' }}>
+                    {MOCK_USER.drug} {MOCK_USER.dosage}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#94a3b8', marginTop: 1 }}>
+                    {MOCK_USER.frequency}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => router.push('/onboarding')}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    backgroundColor: '#eff6ff',
+                    borderRadius: 8,
+                    paddingHorizontal: 10,
+                    paddingVertical: 6,
+                  }}
+                >
+                  <Text style={{ fontSize: 12 }}>✏️</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: BRAND }}>Edit</Text>
+                </Pressable>
+              </View>
+
+              {/* Dose rows */}
               {pending.map((r, i) => {
                 const d = new Date(r.scheduledAt);
                 return (
@@ -261,7 +327,7 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {/* View History button */}
+          {/* View History */}
           <Pressable
             onPress={() => router.push('/(tabs)/history')}
             style={{
@@ -287,9 +353,9 @@ export default function HomeScreen() {
           </Pressable>
         </ScrollView>
 
-        {/* FAB — restart onboarding */}
+        {/* FAB — reset / re-enroll */}
         <Pressable
-          onPress={() => router.push('/onboarding')}
+          onPress={() => router.push('/download')}
           style={{
             position: 'absolute',
             bottom: 24,
@@ -297,17 +363,17 @@ export default function HomeScreen() {
             width: 52,
             height: 52,
             borderRadius: 26,
-            backgroundColor: BRAND,
+            backgroundColor: '#0f172a',
             alignItems: 'center',
             justifyContent: 'center',
-            shadowColor: BRAND,
+            shadowColor: '#000',
             shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.4,
+            shadowOpacity: 0.3,
             shadowRadius: 12,
             elevation: 8,
           }}
         >
-          <Text style={{ fontSize: 20 }}>⚙️</Text>
+          <Text style={{ fontSize: 20 }}>🔄</Text>
         </Pressable>
       </View>
     </SafeAreaView>
