@@ -1,8 +1,67 @@
 import { router } from 'expo-router';
-import { Pressable, SafeAreaView, Text, TextInput, View } from 'react-native';
 import { useState } from 'react';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  Text,
+  TextInput,
+  TextInputProps,
+  View,
+} from 'react-native';
 
 const BRAND = '#006aff';
+
+// ─── Focused input container ──────────────────────────────────────────────────
+
+interface FocusInputProps extends TextInputProps {
+  label: string;
+}
+
+function FocusInput({ label, style, ...props }: FocusInputProps) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <View
+      style={{
+        borderWidth: focused ? 2 : 1,
+        borderColor: focused ? BRAND : '#e2e8f0',
+        borderRadius: 12,
+        paddingHorizontal: 16,
+        paddingTop: 11,
+        paddingBottom: 11,
+        backgroundColor: '#f8fafc',
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 10,
+          fontWeight: '700',
+          letterSpacing: 0.6,
+          color: focused ? BRAND : '#94a3b8',
+          marginBottom: 4,
+        }}
+      >
+        {label}
+      </Text>
+      <TextInput
+        {...props}
+        onFocus={(e) => {
+          setFocused(true);
+          props.onFocus?.(e);
+        }}
+        onBlur={(e) => {
+          setFocused(false);
+          props.onBlur?.(e);
+        }}
+        placeholderTextColor="#cbd5e1"
+        style={[{ color: '#0f172a', fontSize: 15 }, style]}
+      />
+    </View>
+  );
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -10,129 +69,96 @@ export default function SignInScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0f172a' }}>
-      {/* Dark header */}
-      <View
-        style={{
-          flex: 1,
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingHorizontal: 28,
-        }}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
+        {/* Dark header */}
         <View
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 18,
-            backgroundColor: BRAND,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 18,
-            shadowColor: BRAND,
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.4,
-            shadowRadius: 20,
-            elevation: 12,
-          }}
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }}
         >
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Rx</Text>
-        </View>
-        <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: -0.5 }}>
-          Welcome back
-        </Text>
-        <Text style={{ color: '#64748b', fontSize: 14, marginTop: 6 }}>
-          Sign in to your arys·rx account
-        </Text>
-      </View>
-
-      {/* White card */}
-      <View
-        style={{
-          backgroundColor: '#fff',
-          borderTopLeftRadius: 28,
-          borderTopRightRadius: 28,
-          padding: 28,
-          paddingBottom: 48,
-          gap: 14,
-        }}
-      >
-        {/* Email */}
-        <View
-          style={{
-            borderWidth: 1,
-            borderColor: '#e2e8f0',
-            borderRadius: 12,
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            backgroundColor: '#f8fafc',
-          }}
-        >
-          <Text style={{ fontSize: 11, color: '#94a3b8', fontWeight: '600', marginBottom: 4 }}>
-            EMAIL
+          <View
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 18,
+              backgroundColor: BRAND,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 18,
+              shadowColor: BRAND,
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.4,
+              shadowRadius: 20,
+              elevation: 12,
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Rx</Text>
+          </View>
+          <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: -0.5 }}>
+            Welcome back
           </Text>
-          <TextInput
+          <Text style={{ color: '#64748b', fontSize: 14, marginTop: 6 }}>
+            Sign in to your arys·rx account
+          </Text>
+        </View>
+
+        {/* White card */}
+        <View
+          style={{
+            backgroundColor: '#fff',
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            padding: 28,
+            paddingBottom: 48,
+            gap: 12,
+          }}
+        >
+          <FocusInput
+            label="EMAIL"
             value={email}
             onChangeText={setEmail}
             placeholder="you@example.com"
-            placeholderTextColor="#cbd5e1"
-            style={{ color: '#0f172a', fontSize: 15 }}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
           />
-        </View>
 
-        {/* Password */}
-        <View
-          style={{
-            borderWidth: 1,
-            borderColor: '#e2e8f0',
-            borderRadius: 12,
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            backgroundColor: '#f8fafc',
-          }}
-        >
-          <Text style={{ fontSize: 11, color: '#94a3b8', fontWeight: '600', marginBottom: 4 }}>
-            PASSWORD
-          </Text>
-          <TextInput
+          <FocusInput
+            label="PASSWORD"
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
-            placeholderTextColor="#cbd5e1"
-            style={{ color: '#0f172a', fontSize: 15 }}
             secureTextEntry
           />
-        </View>
 
-        {/* Forgot */}
-        <Pressable style={{ alignSelf: 'flex-end' }}>
-          <Text style={{ color: BRAND, fontSize: 13, fontWeight: '500' }}>Forgot password?</Text>
-        </Pressable>
-
-        {/* Sign in CTA */}
-        <Pressable
-          onPress={() => router.replace('/onboarding')}
-          style={{
-            backgroundColor: BRAND,
-            borderRadius: 12,
-            paddingVertical: 16,
-            alignItems: 'center',
-            marginTop: 4,
-          }}
-        >
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Sign in</Text>
-        </Pressable>
-
-        {/* Switch to sign up */}
-        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: 4 }}>
-          <Text style={{ color: '#94a3b8', fontSize: 14 }}>Don't have an account?</Text>
-          <Pressable onPress={() => router.push('/(auth)/sign-up')}>
-            <Text style={{ color: BRAND, fontSize: 14, fontWeight: '600' }}>Create one</Text>
+          <Pressable style={{ alignSelf: 'flex-end' }}>
+            <Text style={{ color: BRAND, fontSize: 13, fontWeight: '500' }}>
+              Forgot password?
+            </Text>
           </Pressable>
+
+          <Pressable
+            onPress={() => router.replace('/onboarding')}
+            style={{
+              backgroundColor: BRAND,
+              borderRadius: 12,
+              paddingVertical: 16,
+              alignItems: 'center',
+              marginTop: 4,
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Sign in</Text>
+          </Pressable>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: 4 }}>
+            <Text style={{ color: '#94a3b8', fontSize: 14 }}>Don't have an account?</Text>
+            <Pressable onPress={() => router.push('/(auth)/sign-up')}>
+              <Text style={{ color: BRAND, fontSize: 14, fontWeight: '600' }}>Create one</Text>
+            </Pressable>
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
