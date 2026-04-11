@@ -2,6 +2,8 @@ import { router } from 'expo-router';
 import { SafeAreaView, Text, View } from 'react-native';
 import { Button } from '@arys-rx/ui';
 
+const BRAND = '#006aff';
+
 export default function SignInScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0f172a' }}>
@@ -13,11 +15,11 @@ export default function SignInScreen() {
               width: 72,
               height: 72,
               borderRadius: 20,
-              backgroundColor: '#0284c7',
+              backgroundColor: BRAND,
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: 20,
-              shadowColor: '#0284c7',
+              shadowColor: BRAND,
               shadowOffset: { width: 0, height: 8 },
               shadowOpacity: 0.4,
               shadowRadius: 20,
@@ -36,10 +38,10 @@ export default function SignInScreen() {
 
         {/* CTAs */}
         <View style={{ width: '100%', gap: 12 }}>
-          {/* TODO: Replace with Clerk SignIn component */}
+          {/* TODO: Replace with Clerk SignIn — routes to onboarding for first-time setup */}
           <Button
             label="Sign in"
-            onPress={() => router.replace('/(tabs)/')}
+            onPress={() => router.replace('/onboarding')}
             fullWidth
           />
           <Button
@@ -50,7 +52,6 @@ export default function SignInScreen() {
           />
         </View>
 
-        {/* Footer note */}
         <Text style={{ color: '#334155', fontSize: 12, marginTop: 32, textAlign: 'center' }}>
           Protected health information is encrypted{'\n'}and stored securely.
         </Text>

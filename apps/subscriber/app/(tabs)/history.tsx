@@ -1,43 +1,16 @@
 import { getAllAdherenceHistory } from '../../lib/api';
-import { Card } from '@arys-rx/ui';
 import type { AdherenceRecord } from '@arys-rx/types';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
-const STATUS_COLOR: Record<string, string> = {
-  taken: '#22c55e',
-  missed: '#ef4444',
-  pending: '#f59e0b',
-};
+const BRAND = '#006aff';
 
-function StatusPill({ status }: { status: string }) {
-  const color = STATUS_COLOR[status] ?? '#94a3b8';
-  return (
-    <View
-      style={{
-        backgroundColor: color + '22',
-        borderRadius: 99,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-      }}
-    >
-      <Text style={{ color, fontSize: 12, fontWeight: '600', textTransform: 'capitalize' }}>
-        {status}
-      </Text>
-    </View>
-  );
+function fmtDate(date: Date, opts: Intl.DateTimeFormatOptions) {
+  return date.toLocaleDateString('en-US', opts);
 }
 
-function StatBox({ value, label, color }: { value: string; label: string; color?: string }) {
-  return (
-    <View style={{ alignItems: 'center', flex: 1 }}>
-      <Text style={{ fontSize: 28, fontWeight: '800', color: color ?? '#0f172a', marginBottom: 2 }}>
-        {value}
-      </Text>
-      <Text style={{ fontSize: 12, color: '#94a3b8', fontWeight: '500' }}>{label}</Text>
-    </View>
-  );
+function fmtTime(date: Date) {
+  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
 export default function HistoryScreen() {
@@ -51,103 +24,151 @@ export default function HistoryScreen() {
   }, []);
 
   const completed = records.filter((r) => r.status !== 'pending');
-  const taken = completed.filter((r) => r.status === 'taken').length;
-  const missed = completed.filter((r) => r.status === 'missed').length;
-  const adherenceRate = completed.length > 0 ? Math.round((taken / completed.length) * 100) : 0;
+  const takenCount = completed.filter((r) => r.status === 'taken').length;
+  const adherenceRate =
+    completed.length > 0 ? Math.round((takenCount / completed.length) * 100) : 0;
 
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f8fafc' }}>
-        <ActivityIndicator color="#0284c7" size="large" />
+        <ActivityIndicator color={BRAND} size="large" />
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f8fafc' }}>
-      <FlatList
-        data={completed}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{
-          paddingHorizontal: 20,
-          paddingTop: 20,
-          paddingBottom: 32,
-          gap: 12,
+    <ScrollView
+      style={{ flex: 1, backgroundColor: '#f8fafc' }}
+      contentContainerStyle={{
+        paddingHorizontal: 16,
+        paddingTop: 20,
+        paddingBottom: 40,
+        gap: 20,
+      }}
+    >
+      {/* Adherence rate card */}
+      <View
+        style={{
+          backgroundColor: '#fff',
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: '#e2e8f0',
+          padding: 28,
+          alignItems: 'center',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.04,
+          shadowRadius: 4,
+          elevation: 1,
         }}
-        ListHeaderComponent={
-          <View style={{ marginBottom: 8 }}>
-            {/* Stats card */}
-            <View
-              style={{
-                backgroundColor: '#0f172a',
-                borderRadius: 24,
-                padding: 22,
-                flexDirection: 'row',
-                shadowColor: '#0f172a',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.2,
-                shadowRadius: 16,
-                elevation: 6,
-                marginBottom: 20,
-              }}
-            >
-              <StatBox value={`${adherenceRate}%`} label="Adherence" color="#7dd3fc" />
-              <View style={{ width: 1, backgroundColor: '#1e293b', marginVertical: 4 }} />
-              <StatBox value={String(taken)} label="Taken" color="#86efac" />
-              <View style={{ width: 1, backgroundColor: '#1e293b', marginVertical: 4 }} />
-              <StatBox value={String(missed)} label="Missed" color="#fca5a5" />
-            </View>
+      >
+        <Text style={{ color: BRAND, fontSize: 56, fontWeight: '800', lineHeight: 64 }}>
+          {adherenceRate}%
+        </Text>
+        <Text style={{ color: '#0f172a', fontSize: 15, fontWeight: '500', marginTop: 6 }}>
+          Overall Adherence Rate
+        </Text>
+        <Text style={{ color: '#94a3b8', fontSize: 13, marginTop: 4 }}>
+          {takenCount} of {completed.length} doses taken
+        </Text>
+      </View>
 
-            <Text style={{ fontSize: 16, fontWeight: '700', color: '#0f172a', marginBottom: 4 }}>
-              All Records
-            </Text>
-          </View>
-        }
-        renderItem={({ item }) => (
-          <Card>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 }}>
+      {/* List header */}
+      <Text style={{ fontSize: 17, fontWeight: '700', color: '#0f172a' }}>Dose History</Text>
+
+      {completed.length === 0 ? (
+        <Text style={{ color: '#94a3b8', fontSize: 14 }}>No history yet.</Text>
+      ) : (
+        <View
+          style={{
+            backgroundColor: '#fff',
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            overflow: 'hidden',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.04,
+            shadowRadius: 4,
+            elevation: 1,
+          }}
+        >
+          {completed.map((r, i) => {
+            const isTaken = r.status === 'taken';
+            const d = new Date(r.scheduledAt);
+            return (
+              <View
+                key={r.id}
+                style={{
+                  flexDirection: 'row',
+                  padding: 16,
+                  borderTopWidth: i > 0 ? 1 : 0,
+                  borderTopColor: '#f1f5f9',
+                  gap: 12,
+                  alignItems: 'flex-start',
+                }}
+              >
+                {/* Status circle */}
                 <View
                   style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: 5,
-                    backgroundColor: STATUS_COLOR[item.status] ?? '#94a3b8',
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    backgroundColor: isTaken ? '#22c55e' : '#ef4444',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginTop: 2,
+                    flexShrink: 0,
                   }}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a' }}>
-                    {item.drugName}
+                >
+                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>
+                    {isTaken ? '✓' : '✗'}
                   </Text>
-                  <Text style={{ fontSize: 13, color: '#94a3b8', marginTop: 2 }}>
-                    {new Date(item.scheduledAt).toLocaleDateString('en-US', {
+                </View>
+
+                {/* Details */}
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{ fontSize: 14, fontWeight: '700', color: '#0f172a', marginBottom: 4 }}
+                  >
+                    {fmtDate(d, {
+                      weekday: 'long',
                       month: 'short',
                       day: 'numeric',
                       year: 'numeric',
                     })}
-                    {item.takenAt &&
-                      ` · ${new Date(item.takenAt).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}`}
                   </Text>
-                  {item.videoId && (
-                    <Text style={{ fontSize: 12, color: '#0284c7', marginTop: 4 }}>
-                      Video recorded
+                  <Text style={{ fontSize: 13, color: '#64748b', marginBottom: 1 }}>
+                    Scheduled: {fmtTime(d)}
+                  </Text>
+                  {r.takenAt && (
+                    <Text style={{ fontSize: 13, color: '#64748b', marginBottom: 5 }}>
+                      Taken: {fmtTime(new Date(r.takenAt))}
                     </Text>
                   )}
+                  <Text
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '600',
+                      color: isTaken ? '#16a34a' : '#dc2626',
+                    }}
+                  >
+                    {isTaken ? 'Dose Taken' : 'Dose Missed'}
+                  </Text>
                 </View>
+
+                {/* Video link */}
+                {r.videoId && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                    <Text style={{ fontSize: 12 }}>🎥</Text>
+                    <Text style={{ fontSize: 13, color: BRAND, fontWeight: '500' }}>Video</Text>
+                  </View>
+                )}
               </View>
-              <StatusPill status={item.status} />
-            </View>
-          </Card>
-        )}
-        ListEmptyComponent={
-          <Text style={{ color: '#94a3b8', textAlign: 'center', marginTop: 32, fontSize: 14 }}>
-            No history yet.
-          </Text>
-        }
-      />
-    </SafeAreaView>
+            );
+          })}
+        </View>
+      )}
+    </ScrollView>
   );
 }
