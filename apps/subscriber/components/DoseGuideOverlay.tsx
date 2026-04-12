@@ -1,6 +1,6 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useRef } from 'react';
-import { Animated, Modal, Pressable, Text, View } from 'react-native';
+import { Animated, Pressable, Text, View } from 'react-native';
 
 const BRAND = '#006aff';
 
@@ -96,17 +96,22 @@ export function DoseGuideOverlay({ visible, onStart }: Props) {
     ]).start(onStart);
   }
 
+  if (!visible) return null;
+
   return (
-    <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
-      {/* Backdrop */}
-      <Animated.View
-        style={{
-          flex: 1,
-          backgroundColor: 'rgba(0,0,0,0.82)',
-          justifyContent: 'flex-end',
-          opacity: fadeAnim,
-        }}
-      >
+    // Absolutely-positioned so it stays inside the MobileFrame width constraint
+    <Animated.View
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.82)',
+        justifyContent: 'flex-end',
+        opacity: fadeAnim,
+      }}
+    >
         {/* Sheet */}
         <Animated.View
           style={{
@@ -255,7 +260,6 @@ export function DoseGuideOverlay({ visible, onStart }: Props) {
             </Pressable>
           </View>
         </Animated.View>
-      </Animated.View>
-    </Modal>
+    </Animated.View>
   );
 }
