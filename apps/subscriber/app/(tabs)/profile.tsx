@@ -1,19 +1,18 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { SubscriberSubpageHeader } from '../../components/SubscriberSubpageHeader';
+import {
+  BRAND,
+  CARD,
+  CARD_GAP,
+  CARD_PAD,
+  CARD_RADIUS,
+  INK,
+  MUTED,
+  PAGE,
+  SCREEN_PAD,
+  SUBTLE_GRAY,
+} from '../../lib/subscriberTheme';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const BRAND = '#006aff';
-
-const PAGE = '#f5f5fa';
-const CARD = '#ffffff';
-const INK = '#000000';
-const MUTED = '#8e8e93';
-const DIVIDER = '#f0f0f5';
-const CARD_RADIUS = 16;
-const SCREEN_PAD = 20;
-const CARD_GAP = 12;
-const CARD_PAD = 20;
 
 // TODO: Replace with real user from Clerk
 const MOCK_USER = {
@@ -46,7 +45,7 @@ function CardRow({
         alignItems: 'center',
         paddingVertical: 14,
         borderBottomWidth: showDivider ? 1 : 0,
-        borderBottomColor: DIVIDER,
+        borderBottomColor: SUBTLE_GRAY,
       }}
     >
       <Text style={{ color: MUTED, fontSize: 14 }}>{label}</Text>
@@ -74,32 +73,11 @@ function SectionHeader({ title }: { title: string }) {
 }
 
 export default function ProfileScreen() {
-  const insets = useSafeAreaInsets();
   const initials = `${MOCK_USER.firstName[0]}${MOCK_USER.lastName[0]}`;
 
   return (
     <View style={{ flex: 1, backgroundColor: PAGE }}>
-      <View
-        style={{
-          paddingTop: Math.max(insets.top, 8),
-          paddingHorizontal: SCREEN_PAD,
-          paddingBottom: 10,
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: PAGE,
-        }}
-      >
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          style={{ marginLeft: -8, padding: 6 }}
-        >
-          <Ionicons name="chevron-back" size={28} color={INK} />
-        </Pressable>
-        <Text style={{ fontSize: 17, fontWeight: '500', color: INK, marginLeft: -2 }}>Profile</Text>
-      </View>
+      <SubscriberSubpageHeader title="Profile" titleWeight="500" color={INK} />
       <ScrollView
         style={{ flex: 1, backgroundColor: PAGE }}
         contentContainerStyle={{

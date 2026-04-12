@@ -1,19 +1,21 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { SubscriberSubpageHeader } from '../../components/SubscriberSubpageHeader';
 import { getAllAdherenceHistory } from '../../lib/api';
+import { fmtDate, fmtTime } from '../../lib/formatDateTime';
+import {
+  BACK_LABEL,
+  BRAND,
+  CARD_GAP,
+  CARD_RADIUS,
+  INK,
+  MUTED,
+  PAGE,
+  SCREEN_PAD,
+} from '../../lib/subscriberTheme';
 import type { AdherenceRecord } from '@arys-rx/types';
-import { useEffect, useState } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const BRAND = '#006aff';
-const PAGE = '#f5f5fa';
-const INK = '#000000';
-const MUTED = '#8e8e93';
-const BACK_LABEL = '#3c3c43';
-const CARD_RADIUS = 16;
-const SCREEN_PAD = 20;
-const CARD_GAP = 12;
 
 const TAKEN_ICON_BG = '#dcfce7';
 const TAKEN_ICON = '#16a34a';
@@ -25,29 +27,40 @@ const MISSED_ICON = '#dc2626';
 const MISSED_BADGE_BG = '#fee2e2';
 const MISSED_BADGE_TEXT = '#b91c1c';
 
-function fmtDate(date: Date, opts: Intl.DateTimeFormatOptions) {
-  return date.toLocaleDateString('en-US', opts);
-}
-
-function fmtTime(date: Date) {
-  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-}
-
 export default function HistoryScreen() {
-  const insets = useSafeAreaInsets();
   const [records, setRecords] = useState<AdherenceRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const showLoadingSpinnerRef = useRef(true);
 
-  useEffect(() => {
-    getAllAdherenceHistory()
-      .then(setRecords)
-      .finally(() => setLoading(false));
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      if (showLoadingSpinnerRef.current) setLoading(true);
+      void (async () => {
+        try {
+          const hist = await getAllAdherenceHistory();
+          if (!active) return;
+          setRecords(hist);
+        } finally {
+          if (active) {
+            if (showLoadingSpinnerRef.current) setLoading(false);
+            showLoadingSpinnerRef.current = false;
+          }
+        }
+      })();
+      return () => {
+        active = false;
+      };
+    }, [])
+  );
 
-  const completed = records.filter((r) => r.status !== 'pending');
-  const takenCount = completed.filter((r) => r.status === 'taken').length;
-  const adherenceRate =
-    completed.length > 0 ? Math.round((takenCount / completed.length) * 100) : 0;
+  const { completed, takenCount, adherenceRate } = useMemo(() => {
+    const completed = records.filter((r) => r.status !== 'pending');
+    const takenCount = completed.filter((r) => r.status === 'taken').length;
+    const adherenceRate =
+      completed.length > 0 ? Math.round((takenCount / completed.length) * 100) : 0;
+    return { completed, takenCount, adherenceRate };
+  }, [records]);
 
   if (loading) {
     return (
@@ -59,27 +72,7 @@ export default function HistoryScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: PAGE }}>
-      <View
-        style={{
-          paddingTop: Math.max(insets.top, 8),
-          paddingHorizontal: SCREEN_PAD,
-          paddingBottom: 12,
-          backgroundColor: PAGE,
-          flexDirection: 'row',
-          alignItems: 'center',
-        }}
-      >
-        <Pressable
-          onPress={() => router.back()}
-          hitSlop={12}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          style={{ flexDirection: 'row', alignItems: 'center', marginLeft: -8, padding: 6 }}
-        >
-          <Ionicons name="chevron-back" size={26} color={BACK_LABEL} />
-          <Text style={{ fontSize: 17, fontWeight: '400', color: BACK_LABEL, marginLeft: -4 }}>Back</Text>
-        </Pressable>
-      </View>
+      <SubscriberSubpageHeader title="Back" titleWeight="400" color={BACK_LABEL} />
 
       <ScrollView
         style={{ flex: 1, backgroundColor: PAGE }}

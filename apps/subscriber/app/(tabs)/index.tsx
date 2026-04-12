@@ -1,5 +1,19 @@
-import { ASSIGNED_MEDS } from '../../lib/assignedMedications';
+import { ASSIGNED_MEDS, assignedMedDosage } from '../../lib/assignedMedications';
 import { getAllAdherenceHistory } from '../../lib/api';
+import { fmtDate, fmtTime } from '../../lib/formatDateTime';
+import {
+  AVATAR_BG,
+  AVATAR_INK,
+  BRAND,
+  CARD,
+  CARD_GAP,
+  CARD_PAD,
+  INK,
+  MUTED,
+  PAGE,
+  SCREEN_PAD,
+  SUBTLE_GRAY,
+} from '../../lib/subscriberTheme';
 import {
   dosageForDrugId,
   loadSubscriberSchedule,
@@ -10,7 +24,7 @@ import type { AdherenceRecord } from '@arys-rx/types';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect } from '@react-navigation/native';
 import { router } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -19,17 +33,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const BRAND = '#006aff';
-
-const PAGE = '#f5f5fa';
-const INK = '#000000';
-const MUTED = '#8e8e93';
-const CARD = '#ffffff';
-const SUBTLE_GRAY = '#f0f0f5';
-const UPCOMING_ROW_BG = '#f5f5fa';
-const AVATAR_BG = '#d6e8ff';
-const AVATAR_INK = '#006aff';
 
 const MOCK_USER = {
   firstName: 'Jane',
@@ -41,9 +44,6 @@ const MOCK_USER = {
 
 const HOME_AVATAR_INITIALS = 'SM';
 
-const SCREEN_PAD = 20;
-const CARD_GAP = 12;
-const CARD_PAD = 20;
 const ROW_V = 12;
 
 function medicationListMeta(
@@ -64,37 +64,20 @@ function medicationListMeta(
       seen.set(r.drugId, {
         drugId: r.drugId,
         drugName: r.drugName,
-        dosage: ASSIGNED_MEDS.find((m) => m.id === r.drugId)?.dosage ?? '',
+        dosage: assignedMedDosage(r.drugId),
         frequencyLabel: '',
       });
     }
   }
   if (seen.size === 0) {
-    return [
-      {
-        drugId: 'drug-001',
-        drugName: MOCK_USER.drug,
-        dosage: MOCK_USER.dosage,
-        frequencyLabel: MOCK_USER.frequency,
-      },
-    ];
+    return ASSIGNED_MEDS.map((m) => ({
+      drugId: m.id,
+      drugName: m.name,
+      dosage: m.dosage,
+      frequencyLabel: m.id === 'drug-001' ? MOCK_USER.frequency : 'Weekly',
+    }));
   }
   return Array.from(seen.values());
-}
-
-function metaForDrug(
-  medMetaList: { drugId: string; drugName: string; dosage: string; frequencyLabel: string }[],
-  drugId: string
-) {
-  return medMetaList.find((m) => m.drugId === drugId);
-}
-
-function fmtDate(date: Date, opts: Intl.DateTimeFormatOptions) {
-  return date.toLocaleDateString('en-US', opts);
-}
-
-function fmtTime(date: Date) {
-  return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 }
 
 function usualTimeLabel(
@@ -109,7 +92,8 @@ function usualTimeLabel(
   return '8:00 AM';
 }
 
-function UpcomingWhen({ d }: { d: Date }) {
+const UpcomingWhen = memo(function UpcomingWhen({ scheduledAt }: { scheduledAt: string }) {
+  const d = new Date(scheduledAt);
   const datePart = `${fmtDate(d, { weekday: 'long' })}, ${fmtDate(d, { month: 'short', day: 'numeric' })}`;
   const timePart = fmtTime(d);
   return (
@@ -118,18 +102,19 @@ function UpcomingWhen({ d }: { d: Date }) {
       <Text style={{ fontSize: 14, fontWeight: '400', color: MUTED }}>  {timePart}</Text>
     </Text>
   );
-}
+});
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [records, setRecords] = useState<AdherenceRecord[]>([]);
   const [scheduleProfile, setScheduleProfile] = useState<SavedSubscriberSchedule | null>(null);
   const [loading, setLoading] = useState(true);
+  const showLoadingSpinnerRef = useRef(true);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      setLoading(true);
+      if (showLoadingSpinnerRef.current) setLoading(true);
       void (async () => {
         try {
           const [hist, profile] = await Promise.all([
@@ -140,7 +125,10 @@ export default function HomeScreen() {
           setRecords(hist);
           setScheduleProfile(profile);
         } finally {
-          if (active) setLoading(false);
+          if (active) {
+            if (showLoadingSpinnerRef.current) setLoading(false);
+            showLoadingSpinnerRef.current = false;
+          }
         }
       })();
       return () => {
@@ -149,17 +137,28 @@ export default function HomeScreen() {
     }, [])
   );
 
-  const pending = mergePendingWithProfile(records, scheduleProfile);
-  const pendingSorted = [...pending].sort(
-    (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
-  );
-  const nextDose = pendingSorted[0] ?? null;
-  const medMetaList = medicationListMeta(scheduleProfile, pending);
+  const { pendingSorted, medMetaList, medMetaByDrugId, nextDose } = useMemo(() => {
+    const pending = mergePendingWithProfile(records, scheduleProfile);
+    const pendingSorted = [...pending].sort(
+      (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
+    );
+    const medMetaList = medicationListMeta(scheduleProfile, pending);
+    const medMetaByDrugId = new Map(medMetaList.map((m) => [m.drugId, m]));
+    return {
+      pendingSorted,
+      medMetaList,
+      medMetaByDrugId,
+      nextDose: pendingSorted[0] ?? null,
+    };
+  }, [records, scheduleProfile]);
 
-  const nextDoseDosage = nextDose
-    ? dosageForDrugId(scheduleProfile, nextDose.drugId) ??
-      ASSIGNED_MEDS.find((m) => m.id === nextDose.drugId)?.dosage
-    : undefined;
+  const nextDoseDosage = useMemo(() => {
+    if (!nextDose) return undefined;
+    const fromProfile = dosageForDrugId(scheduleProfile, nextDose.drugId);
+    if (fromProfile) return fromProfile;
+    const d = assignedMedDosage(nextDose.drugId);
+    return d || undefined;
+  }, [scheduleProfile, nextDose]);
 
   const cardRadius = 16;
 
@@ -318,7 +317,7 @@ export default function HomeScreen() {
           >
             <Text style={{ fontSize: 17, fontWeight: '500', color: INK }}>Your Medications</Text>
             <Pressable onPress={() => router.push('/onboarding')} hitSlop={8}>
-              <Text style={{ fontSize: 16, fontWeight: '500', color: BRAND }}>Edit</Text>
+              <Text style={{ fontSize: 15, fontWeight: '500', color: BRAND }}>Edit</Text>
             </Pressable>
           </View>
 
@@ -375,8 +374,8 @@ export default function HomeScreen() {
               hitSlop={8}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 0 }}
             >
-              <Text style={{ fontSize: 13, fontWeight: '500', color: INK }}>View History</Text>
-              <Ionicons name="chevron-forward" size={14} color={INK} />
+              <Text style={{ fontSize: 15, fontWeight: '500', color: INK }}>View History</Text>
+              <Ionicons name="chevron-forward" size={16} color={INK} />
             </Pressable>
           </View>
 
@@ -384,16 +383,15 @@ export default function HomeScreen() {
             <Text style={{ fontSize: 14, color: MUTED, paddingVertical: 12 }}>No upcoming doses scheduled.</Text>
           ) : (
             pendingSorted.map((r, i) => {
-              const d = new Date(r.scheduledAt);
-              const meta = metaForDrug(medMetaList, r.drugId);
+              const meta = medMetaByDrugId.get(r.drugId);
               const freq = meta?.frequencyLabel || MOCK_USER.frequency;
-              const dosage = meta?.dosage ?? ASSIGNED_MEDS.find((m) => m.id === r.drugId)?.dosage ?? '';
+              const dosage = meta?.dosage || assignedMedDosage(r.drugId);
               const isLast = i === pendingSorted.length - 1;
               return (
                 <View
                   key={r.id}
                   style={{
-                    backgroundColor: UPCOMING_ROW_BG,
+                    backgroundColor: PAGE,
                     borderRadius: 12,
                     paddingVertical: 16,
                     paddingHorizontal: 16,
@@ -409,7 +407,7 @@ export default function HomeScreen() {
                       {r.drugName} {dosage}
                     </Text>
                     <Text style={{ fontSize: 14, color: MUTED, marginTop: 4 }}>{freq}</Text>
-                    <UpcomingWhen d={d} />
+                    <UpcomingWhen scheduledAt={r.scheduledAt} />
                   </View>
                   <View
                     style={{

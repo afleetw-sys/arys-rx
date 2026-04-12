@@ -17,6 +17,14 @@ export const ASSIGNED_MEDS = [
   },
 ] as const;
 
+const ASSIGNED_MED_DOSAGE_BY_ID = new Map<string, string>(
+  ASSIGNED_MEDS.map((m) => [m.id, m.dosage])
+);
+
+export function assignedMedDosage(drugId: string): string {
+  return ASSIGNED_MED_DOSAGE_BY_ID.get(drugId) ?? '';
+}
+
 export type AssignedMedication = (typeof ASSIGNED_MEDS)[number];
 
 export const FREQUENCY_OPTIONS = [
