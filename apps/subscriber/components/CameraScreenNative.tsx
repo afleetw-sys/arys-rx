@@ -1,8 +1,9 @@
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Button } from '@arys-rx/ui';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { router } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { DoseGuideOverlay } from './DoseGuideOverlay';
 
 interface Props {
@@ -15,42 +16,45 @@ export function CameraScreenNative({ onRecordingComplete }: Props) {
   const [showGuide, setShowGuide] = useState(true);
   const cameraRef = useRef<CameraView>(null);
 
+  function handleClose() {
+    if (recording) cameraRef.current?.stopRecording();
+    router.back();
+  }
+
   if (!permission) {
     return <View style={{ flex: 1, backgroundColor: '#000' }} />;
   }
 
   if (!permission.granted) {
     return (
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: '#0f172a',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 16,
-          paddingHorizontal: 24,
-        }}
-      >
+      <View style={{ flex: 1, backgroundColor: '#0f172a' }}>
         <View
-          style={{
-            width: 64,
-            height: 64,
-            borderRadius: 32,
-            backgroundColor: 'rgba(255,255,255,0.08)',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 4,
-          }}
+          style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 24 }}
         >
-          <MaterialIcons name="videocam_off" size={32} color="rgba(255,255,255,0.5)" />
+          <View
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 32,
+              backgroundColor: 'rgba(255,255,255,0.08)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 4,
+            }}
+          >
+            <MaterialIcons name="videocam_off" size={32} color="rgba(255,255,255,0.5)" />
+          </View>
+          <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700', textAlign: 'center' }}>
+            Camera access required
+          </Text>
+          <Text
+            style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, textAlign: 'center', lineHeight: 20 }}
+          >
+            Camera access is needed to record your dose.
+          </Text>
+          <Button label="Grant permission" onPress={requestPermission} />
         </View>
-        <Text style={{ color: '#fff', fontSize: 17, fontWeight: '700', textAlign: 'center' }}>
-          Camera access required
-        </Text>
-        <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, textAlign: 'center', lineHeight: 20 }}>
-          Camera access is needed to record your dose.
-        </Text>
-        <Button label="Grant permission" onPress={requestPermission} />
+        <CloseButton onPress={handleClose} />
       </View>
     );
   }
@@ -83,6 +87,30 @@ export function CameraScreenNative({ onRecordingComplete }: Props) {
 
       {/* Guide shown on top of camera every time */}
       <DoseGuideOverlay visible={showGuide} onStart={() => setShowGuide(false)} />
+
+      {/* Close button rendered last so it sits above the guide overlay */}
+      <CloseButton onPress={handleClose} />
     </View>
+  );
+}
+
+function CloseButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => ({
+        position: 'absolute',
+        top: 52,
+        right: 16,
+        width: 38,
+        height: 38,
+        borderRadius: 19,
+        backgroundColor: pressed ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.45)',
+        alignItems: 'center',
+        justifyContent: 'center',
+      })}
+    >
+      <MaterialIcons name="close" size={22} color="#fff" />
+    </Pressable>
   );
 }
