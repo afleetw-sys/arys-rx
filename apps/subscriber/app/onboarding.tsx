@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 const BRAND = '#006aff';
@@ -15,32 +15,13 @@ const ASSIGNED_MEDS = [
     dosage: '40mg/0.8mL',
     route: 'Subcutaneous injection',
   },
-];
-
-const METHOD_OPTIONS = [
   {
-    id: 'self-injection',
-    label: 'Self-injection',
-    description: 'You administer it yourself at home',
-    icon: '💉',
-  },
-  {
-    id: 'provider-injection',
-    label: 'Provider-administered',
-    description: 'Given by a nurse or physician',
-    icon: '🏥',
-  },
-  {
-    id: 'oral',
-    label: 'Oral tablet / capsule',
-    description: 'Swallowed by mouth',
-    icon: '💊',
-  },
-  {
-    id: 'infusion',
-    label: 'IV infusion',
-    description: 'Administered at an infusion center',
-    icon: '🩺',
+    id: 'drug-002',
+    name: 'Enbrel',
+    genericName: 'etanercept',
+    manufacturer: 'Amgen / Pfizer',
+    dosage: '50mg/mL',
+    route: 'Subcutaneous injection',
   },
 ];
 
@@ -53,46 +34,36 @@ const FREQUENCY_OPTIONS = [
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type MedStep = 'method' | 'frequency' | 'time';
-type Phase = { kind: 'intro' } | { kind: 'med'; medIndex: number; step: MedStep };
+type Phase = { kind: 'intro' } | { kind: 'med'; medIndex: number };
 
 interface MedConfig {
   drugId: string;
-  method: string | null;
   frequency: string | null;
-  time: string;
+  lastDoseDate: Date | null;
+  hour: number;   // 1–12
+  minute: number; // 0, 5, 10, … 55
+  ampm: 'AM' | 'PM';
 }
 
-const STEPS_PER_MED = 3; // method + frequency + time
-const TOTAL_STEPS = 1 + ASSIGNED_MEDS.length * STEPS_PER_MED;
+const TOTAL_STEPS = 1 + ASSIGNED_MEDS.length;
 
 function phaseStepNum(phase: Phase): number {
-  if (phase.kind === 'intro') return 1;
-  const offset = { method: 0, frequency: 1, time: 2 };
-  return 2 + phase.medIndex * STEPS_PER_MED + offset[phase.step];
+  return phase.kind === 'intro' ? 1 : 2 + phase.medIndex;
 }
 
 function phaseTitle(phase: Phase): string {
   if (phase.kind === 'intro') return 'Your Medications';
-  const med = ASSIGNED_MEDS[phase.medIndex];
-  if (phase.step === 'method') return `${med.name} · Administration`;
-  if (phase.step === 'frequency') return `${med.name} · Dose Schedule`;
-  return `${med.name} · Dose Time`;
+  return `${ASSIGNED_MEDS[phase.medIndex].name} Schedule`;
 }
 
 function phaseSubtitle(phase: Phase): string {
   if (phase.kind === 'intro') return 'These specialty medications have been assigned to you.';
-  const med = ASSIGNED_MEDS[phase.medIndex];
-  if (phase.step === 'method') return 'How will you administer this medication?';
-  if (phase.step === 'frequency') return `How often will you take ${med.name}?`;
-  return 'Set the exact time you will take your dose.';
+  return `Configure when you take ${ASSIGNED_MEDS[phase.medIndex].name}.`;
 }
 
 function ctaLabel(phase: Phase): string {
   if (phase.kind === 'intro') return 'Continue';
-  const isLast =
-    phase.step === 'time' && phase.medIndex === ASSIGNED_MEDS.length - 1;
-  return isLast ? 'Get Started' : 'Continue';
+  return phase.medIndex === ASSIGNED_MEDS.length - 1 ? 'Get Started' : 'Continue';
 }
 
 // ─── Screen ──────────────────────────────────────────────────────────────────
@@ -102,9 +73,11 @@ export default function OnboardingScreen() {
   const [medConfigs, setMedConfigs] = useState<MedConfig[]>(
     ASSIGNED_MEDS.map((m) => ({
       drugId: m.id,
-      method: null,
       frequency: null,
-      time: '8:00 AM',
+      lastDoseDate: null,
+      hour: 8,
+      minute: 0,
+      ampm: 'AM',
     }))
   );
 
@@ -117,32 +90,26 @@ export default function OnboardingScreen() {
   function canContinue(): boolean {
     if (phase.kind === 'intro') return true;
     const cfg = medConfigs[phase.medIndex];
-    if (phase.step === 'method') return !!cfg.method;
-    if (phase.step === 'frequency') return !!cfg.frequency;
-    return true; // time always has a default
+    if (!cfg.frequency) return false;
+    if (cfg.frequency !== 'daily' && !cfg.lastDoseDate) return false;
+    return true;
   }
 
   function advance() {
     if (phase.kind === 'intro') {
-      setPhase({ kind: 'med', medIndex: 0, step: 'method' });
+      setPhase({ kind: 'med', medIndex: 0 });
     } else {
-      const { medIndex, step } = phase;
-      if (step === 'method') {
-        setPhase({ kind: 'med', medIndex, step: 'frequency' });
-      } else if (step === 'frequency') {
-        setPhase({ kind: 'med', medIndex, step: 'time' });
+      const next = phase.medIndex + 1;
+      if (next < ASSIGNED_MEDS.length) {
+        setPhase({ kind: 'med', medIndex: next });
       } else {
-        // time → next med or done
-        if (medIndex < ASSIGNED_MEDS.length - 1) {
-          setPhase({ kind: 'med', medIndex: medIndex + 1, step: 'method' });
-        } else {
-          router.replace('/(tabs)/');
-        }
+        router.replace('/(tabs)/');
       }
     }
   }
 
   const stepNum = phaseStepNum(phase);
+  const cfg = phase.kind === 'med' ? medConfigs[phase.medIndex] : null;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0f172a' }}>
@@ -157,8 +124,7 @@ export default function OnboardingScreen() {
                 flex: 1,
                 height: 3,
                 borderRadius: 2,
-                backgroundColor:
-                  i < stepNum ? BRAND : 'rgba(255,255,255,0.15)',
+                backgroundColor: i < stepNum ? BRAND : 'rgba(255,255,255,0.15)',
               }}
             />
           ))}
@@ -202,25 +168,23 @@ export default function OnboardingScreen() {
         >
           {phase.kind === 'intro' && <StepMedications />}
 
-          {phase.kind === 'med' && phase.step === 'method' && (
-            <StepMethod
-              selected={medConfigs[phase.medIndex].method}
-              onSelect={(v) => updateConfig(phase.medIndex, { method: v })}
-            />
-          )}
-
-          {phase.kind === 'med' && phase.step === 'frequency' && (
-            <StepFrequency
-              selected={medConfigs[phase.medIndex].frequency}
-              onSelect={(v) => updateConfig(phase.medIndex, { frequency: v })}
-            />
-          )}
-
-          {phase.kind === 'med' && phase.step === 'time' && (
-            <StepTime
-              onChange={(v) =>
-                phase.kind === 'med' && updateConfig(phase.medIndex, { time: v })
+          {phase.kind === 'med' && cfg && (
+            <StepSchedule
+              frequency={cfg.frequency}
+              onFrequencyChange={(v) =>
+                updateConfig(phase.medIndex, {
+                  frequency: v,
+                  lastDoseDate: v === 'daily' ? null : cfg.lastDoseDate,
+                })
               }
+              lastDoseDate={cfg.lastDoseDate}
+              onLastDoseDateChange={(d) => updateConfig(phase.medIndex, { lastDoseDate: d })}
+              hour={cfg.hour}
+              minute={cfg.minute}
+              ampm={cfg.ampm}
+              onHourChange={(h) => updateConfig(phase.medIndex, { hour: h })}
+              onMinuteChange={(m) => updateConfig(phase.medIndex, { minute: m })}
+              onAmpmChange={(p) => updateConfig(phase.medIndex, { ampm: p })}
             />
           )}
         </ScrollView>
@@ -327,289 +291,501 @@ function StepMedications() {
   );
 }
 
-// ─── Method selection ─────────────────────────────────────────────────────────
+// ─── Step 2+: Combined schedule step ─────────────────────────────────────────
 
-function StepMethod({
-  selected,
-  onSelect,
+function StepSchedule({
+  frequency,
+  onFrequencyChange,
+  lastDoseDate,
+  onLastDoseDateChange,
+  hour,
+  minute,
+  ampm,
+  onHourChange,
+  onMinuteChange,
+  onAmpmChange,
 }: {
-  selected: string | null;
-  onSelect: (v: string) => void;
+  frequency: string | null;
+  onFrequencyChange: (v: string) => void;
+  lastDoseDate: Date | null;
+  onLastDoseDateChange: (d: Date) => void;
+  hour: number;
+  minute: number;
+  ampm: 'AM' | 'PM';
+  onHourChange: (h: number) => void;
+  onMinuteChange: (m: number) => void;
+  onAmpmChange: (p: 'AM' | 'PM') => void;
 }) {
-  return (
-    <View style={{ gap: 10 }}>
-      {METHOD_OPTIONS.map((opt) => {
-        const active = selected === opt.id;
-        return (
-          <Pressable
-            key={opt.id}
-            onPress={() => onSelect(opt.id)}
-            style={{
-              backgroundColor: '#fff',
-              borderRadius: 14,
-              borderWidth: active ? 2 : 1,
-              borderColor: active ? BRAND : '#e2e8f0',
-              padding: 16,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 14,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.04,
-              shadowRadius: 4,
-              elevation: 1,
-            }}
-          >
-            {/* Icon badge */}
-            <View
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 12,
-                backgroundColor: active ? '#eff6ff' : '#f8fafc',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <Text style={{ fontSize: 22 }}>{opt.icon}</Text>
-            </View>
-
-            {/* Labels */}
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 15, fontWeight: '700', color: '#0f172a' }}>
-                {opt.label}
-              </Text>
-              <Text style={{ fontSize: 13, color: '#94a3b8', marginTop: 2 }}>
-                {opt.description}
-              </Text>
-            </View>
-
-            {/* Radio indicator */}
-            <View
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: 11,
-                borderWidth: active ? 0 : 1.5,
-                borderColor: '#cbd5e1',
-                backgroundColor: active ? BRAND : 'transparent',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              {active && (
-                <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>✓</Text>
-              )}
-            </View>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
-
-// ─── Frequency selection ──────────────────────────────────────────────────────
-
-function StepFrequency({
-  selected,
-  onSelect,
-}: {
-  selected: string | null;
-  onSelect: (v: string) => void;
-}) {
-  return (
-    <View style={{ gap: 10 }}>
-      {FREQUENCY_OPTIONS.map((opt) => {
-        const active = selected === opt.id;
-        return (
-          <Pressable
-            key={opt.id}
-            onPress={() => onSelect(opt.id)}
-            style={{
-              backgroundColor: '#fff',
-              borderRadius: 12,
-              borderWidth: active ? 2 : 1,
-              borderColor: active ? BRAND : '#e2e8f0',
-              padding: 16,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.04,
-              shadowRadius: 4,
-              elevation: 1,
-            }}
-          >
-            <View>
-              <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a' }}>
-                {opt.label}
-              </Text>
-              <Text style={{ fontSize: 13, color: '#94a3b8', marginTop: 2 }}>
-                {opt.description}
-              </Text>
-            </View>
-            <View
-              style={{
-                width: 22,
-                height: 22,
-                borderRadius: 11,
-                borderWidth: active ? 0 : 1.5,
-                borderColor: '#cbd5e1',
-                backgroundColor: active ? BRAND : 'transparent',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              {active && (
-                <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>✓</Text>
-              )}
-            </View>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
-
-// ─── Exact time picker ────────────────────────────────────────────────────────
-
-function StepTime({ onChange }: { onChange: (time: string) => void }) {
-  const [hour, setHour] = useState(8);
-  const [minute, setMinute] = useState(0);
-  const [ampm, setAmpm] = useState<'AM' | 'PM'>('AM');
-
-  useEffect(() => {
-    onChange(`${hour}:${minute.toString().padStart(2, '0')} ${ampm}`);
-  }, [hour, minute, ampm]); // eslint-disable-line react-hooks/exhaustive-deps
+  const isDaily = frequency === 'daily';
+  const showDateStrip = !!frequency && !isDaily;
 
   return (
     <View style={{ gap: 24 }}>
-      {/* Picker card */}
+      {/* Frequency */}
+      <View>
+        <Text
+          style={{
+            fontSize: 11,
+            fontWeight: '700',
+            color: '#94a3b8',
+            letterSpacing: 0.8,
+            marginBottom: 10,
+          }}
+        >
+          HOW OFTEN
+        </Text>
+        <View style={{ gap: 8 }}>
+          {FREQUENCY_OPTIONS.map((opt) => {
+            const active = frequency === opt.id;
+            return (
+              <Pressable
+                key={opt.id}
+                onPress={() => onFrequencyChange(opt.id)}
+                style={{
+                  backgroundColor: '#fff',
+                  borderRadius: 12,
+                  borderWidth: active ? 2 : 1,
+                  borderColor: active ? BRAND : '#e2e8f0',
+                  padding: 14,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.04,
+                  shadowRadius: 4,
+                  elevation: 1,
+                }}
+              >
+                <View>
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a' }}>
+                    {opt.label}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#94a3b8', marginTop: 1 }}>
+                    {opt.description}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 11,
+                    borderWidth: active ? 0 : 1.5,
+                    borderColor: '#cbd5e1',
+                    backgroundColor: active ? BRAND : 'transparent',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {active && (
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>✓</Text>
+                  )}
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Last dose date (non-daily only) */}
+      {showDateStrip && (
+        <View>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: '700',
+              color: '#94a3b8',
+              letterSpacing: 0.8,
+              marginBottom: 10,
+            }}
+          >
+            WHEN WAS YOUR LAST DOSE?
+          </Text>
+          <DateStrip selected={lastDoseDate} onSelect={onLastDoseDateChange} />
+        </View>
+      )}
+
+      {/* Time picker (appears once frequency is chosen) */}
+      {!!frequency && (
+        <View>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: '700',
+              color: '#94a3b8',
+              letterSpacing: 0.8,
+              marginBottom: 16,
+            }}
+          >
+            {isDaily ? 'WHAT TIME DO YOU TAKE IT?' : 'AT WHAT TIME?'}
+          </Text>
+          <MaterialClock
+            hour={hour}
+            minute={minute}
+            ampm={ampm}
+            onHourChange={onHourChange}
+            onMinuteChange={onMinuteChange}
+            onAmpmChange={onAmpmChange}
+          />
+        </View>
+      )}
+    </View>
+  );
+}
+
+// ─── Date strip ───────────────────────────────────────────────────────────────
+
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTH_LABELS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+];
+
+function DateStrip({
+  selected,
+  onSelect,
+}: {
+  selected: Date | null;
+  onSelect: (d: Date) => void;
+}) {
+  const scrollRef = useRef<ScrollView>(null);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const days = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() - (13 - i));
+    return d;
+  });
+
+  useEffect(() => {
+    // Scroll to show today (rightmost)
+    scrollRef.current?.scrollToEnd({ animated: false });
+  }, []);
+
+  return (
+    <ScrollView
+      ref={scrollRef}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ gap: 8, paddingVertical: 4 }}
+    >
+      {days.map((d, i) => {
+        const isSelected = selected
+          ? d.toDateString() === selected.toDateString()
+          : false;
+        const isToday = d.toDateString() === today.toDateString();
+        return (
+          <Pressable
+            key={i}
+            onPress={() => onSelect(d)}
+            style={{
+              width: 52,
+              alignItems: 'center',
+              paddingVertical: 10,
+              borderRadius: 12,
+              backgroundColor: isSelected ? BRAND : '#fff',
+              borderWidth: isSelected ? 2 : 1,
+              borderColor: isSelected ? BRAND : '#e2e8f0',
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 10,
+                fontWeight: '600',
+                color: isSelected ? 'rgba(255,255,255,0.8)' : '#94a3b8',
+              }}
+            >
+              {isToday ? 'TODAY' : DAY_LABELS[d.getDay()]}
+            </Text>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: '700',
+                color: isSelected ? '#fff' : '#0f172a',
+                marginTop: 4,
+              }}
+            >
+              {d.getDate()}
+            </Text>
+            <Text
+              style={{
+                fontSize: 10,
+                color: isSelected ? 'rgba(255,255,255,0.8)' : '#94a3b8',
+                marginTop: 2,
+              }}
+            >
+              {MONTH_LABELS[d.getMonth()]}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </ScrollView>
+  );
+}
+
+// ─── Material-style clock picker ──────────────────────────────────────────────
+
+const CLOCK_SIZE = 240;
+const CLOCK_R = CLOCK_SIZE / 2;  // 120
+const MARKER_R = 82;             // distance from center to number markers
+const MARKER_SIZE = 36;
+
+// Clock positions: index 0 = 12 o'clock, clockwise
+const HOUR_ORDER = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+const MINUTE_ORDER = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+
+function clockPos(index: number): { x: number; y: number } {
+  const angle = (index / 12) * 2 * Math.PI - Math.PI / 2;
+  return {
+    x: CLOCK_R + MARKER_R * Math.cos(angle),
+    y: CLOCK_R + MARKER_R * Math.sin(angle),
+  };
+}
+
+function MaterialClock({
+  hour,
+  minute,
+  ampm,
+  onHourChange,
+  onMinuteChange,
+  onAmpmChange,
+}: {
+  hour: number;
+  minute: number;
+  ampm: 'AM' | 'PM';
+  onHourChange: (h: number) => void;
+  onMinuteChange: (m: number) => void;
+  onAmpmChange: (p: 'AM' | 'PM') => void;
+}) {
+  const [mode, setMode] = useState<'hour' | 'minute'>('hour');
+
+  const selHourIdx = HOUR_ORDER.indexOf(hour);
+  const nearestMinute = (Math.round(minute / 5) * 5) % 60;
+  const selMinuteIdx = MINUTE_ORDER.indexOf(nearestMinute);
+
+  const selIdx = mode === 'hour' ? selHourIdx : selMinuteIdx;
+  const selPos = clockPos(selIdx >= 0 ? selIdx : 0);
+
+  // Hand: rectangle centered at midpoint of line from clock center → selPos
+  const handAngle =
+    Math.atan2(selPos.y - CLOCK_R, selPos.x - CLOCK_R) * (180 / Math.PI);
+  const midX = (CLOCK_R + selPos.x) / 2;
+  const midY = (CLOCK_R + selPos.y) / 2;
+
+  return (
+    <View style={{ alignItems: 'center', gap: 20 }}>
+      {/* Digital display + AM/PM */}
       <View
         style={{
+          flexDirection: 'row',
+          alignItems: 'center',
           backgroundColor: '#fff',
-          borderRadius: 20,
+          borderRadius: 16,
+          paddingHorizontal: 20,
+          paddingVertical: 12,
           borderWidth: 1,
           borderColor: '#e2e8f0',
-          padding: 28,
-          alignItems: 'center',
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.06,
-          shadowRadius: 8,
-          elevation: 2,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.04,
+          shadowRadius: 4,
+          elevation: 1,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <PickerColumn
-            value={hour.toString().padStart(2, '0')}
-            onUp={() => setHour((h) => (h === 12 ? 1 : h + 1))}
-            onDown={() => setHour((h) => (h === 1 ? 12 : h - 1))}
-          />
-
-          <Text style={{ fontSize: 44, fontWeight: '800', color: '#0f172a', marginBottom: 4 }}>
-            :
+        {/* Hour tab */}
+        <Pressable
+          onPress={() => setMode('hour')}
+          style={{
+            backgroundColor: mode === 'hour' ? BRAND : '#f1f5f9',
+            borderRadius: 10,
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            minWidth: 58,
+            alignItems: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 30,
+              fontWeight: '300',
+              letterSpacing: 1,
+              color: mode === 'hour' ? '#fff' : '#0f172a',
+            }}
+          >
+            {hour.toString().padStart(2, '0')}
           </Text>
+        </Pressable>
 
-          <PickerColumn
-            value={minute.toString().padStart(2, '0')}
-            onUp={() => setMinute((m) => (m + 5 >= 60 ? 0 : m + 5))}
-            onDown={() => setMinute((m) => (m - 5 < 0 ? 55 : m - 5))}
-          />
+        <Text style={{ fontSize: 30, fontWeight: '300', color: '#94a3b8', marginHorizontal: 2 }}>
+          :
+        </Text>
 
-          <View style={{ gap: 8, marginLeft: 12 }}>
-            {(['AM', 'PM'] as const).map((p) => (
-              <Pressable
-                key={p}
-                onPress={() => setAmpm(p)}
+        {/* Minute tab */}
+        <Pressable
+          onPress={() => setMode('minute')}
+          style={{
+            backgroundColor: mode === 'minute' ? BRAND : '#f1f5f9',
+            borderRadius: 10,
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            minWidth: 58,
+            alignItems: 'center',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 30,
+              fontWeight: '300',
+              letterSpacing: 1,
+              color: mode === 'minute' ? '#fff' : '#0f172a',
+            }}
+          >
+            {minute.toString().padStart(2, '0')}
+          </Text>
+        </Pressable>
+
+        {/* AM / PM */}
+        <View style={{ marginLeft: 12, gap: 6 }}>
+          {(['AM', 'PM'] as const).map((p) => (
+            <Pressable
+              key={p}
+              onPress={() => onAmpmChange(p)}
+              style={{
+                paddingHorizontal: 10,
+                paddingVertical: 4,
+                borderRadius: 6,
+                backgroundColor: ampm === p ? BRAND : 'transparent',
+              }}
+            >
+              <Text
                 style={{
-                  backgroundColor: ampm === p ? BRAND : '#f1f5f9',
-                  borderRadius: 10,
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  minWidth: 56,
+                  fontSize: 13,
+                  fontWeight: '700',
+                  color: ampm === p ? '#fff' : '#94a3b8',
+                }}
+              >
+                {p}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {/* Clock face */}
+      <View
+        style={{
+          width: CLOCK_SIZE,
+          height: CLOCK_SIZE,
+          borderRadius: CLOCK_R,
+          backgroundColor: '#e8f0fe',
+        }}
+      >
+        {/* Hand: rectangle from center to selected marker */}
+        {selIdx >= 0 && (
+          <View
+            style={{
+              position: 'absolute',
+              width: MARKER_R,
+              height: 2,
+              left: midX - MARKER_R / 2,
+              top: midY - 1,
+              backgroundColor: BRAND,
+              borderRadius: 1,
+              transform: [{ rotate: `${handAngle}deg` }],
+            }}
+          />
+        )}
+
+        {/* Center dot */}
+        <View
+          style={{
+            position: 'absolute',
+            width: 10,
+            height: 10,
+            borderRadius: 5,
+            backgroundColor: BRAND,
+            left: CLOCK_R - 5,
+            top: CLOCK_R - 5,
+          }}
+        />
+
+        {/* Hour markers */}
+        {mode === 'hour' &&
+          HOUR_ORDER.map((h, i) => {
+            const { x, y } = clockPos(i);
+            const isSelected = h === hour;
+            return (
+              <Pressable
+                key={h}
+                onPress={() => {
+                  onHourChange(h);
+                  setMode('minute'); // auto-advance to minute mode
+                }}
+                style={{
+                  position: 'absolute',
+                  width: MARKER_SIZE,
+                  height: MARKER_SIZE,
+                  borderRadius: MARKER_SIZE / 2,
+                  backgroundColor: isSelected ? BRAND : 'transparent',
                   alignItems: 'center',
+                  justifyContent: 'center',
+                  left: x - MARKER_SIZE / 2,
+                  top: y - MARKER_SIZE / 2,
                 }}
               >
                 <Text
                   style={{
-                    color: ampm === p ? '#fff' : '#64748b',
-                    fontWeight: '700',
-                    fontSize: 15,
+                    fontSize: 14,
+                    fontWeight: isSelected ? '700' : '500',
+                    color: isSelected ? '#fff' : '#1e293b',
                   }}
                 >
-                  {p}
+                  {h}
                 </Text>
               </Pressable>
-            ))}
-          </View>
-        </View>
+            );
+          })}
+
+        {/* Minute markers */}
+        {mode === 'minute' &&
+          MINUTE_ORDER.map((m, i) => {
+            const { x, y } = clockPos(i);
+            const isSelected = m === nearestMinute;
+            return (
+              <Pressable
+                key={m}
+                onPress={() => onMinuteChange(m)}
+                style={{
+                  position: 'absolute',
+                  width: MARKER_SIZE,
+                  height: MARKER_SIZE,
+                  borderRadius: MARKER_SIZE / 2,
+                  backgroundColor: isSelected ? BRAND : 'transparent',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  left: x - MARKER_SIZE / 2,
+                  top: y - MARKER_SIZE / 2,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    fontWeight: isSelected ? '700' : '500',
+                    color: isSelected ? '#fff' : '#1e293b',
+                  }}
+                >
+                  {m.toString().padStart(2, '0')}
+                </Text>
+              </Pressable>
+            );
+          })}
       </View>
 
-      {/* Live preview */}
-      <View style={{ alignItems: 'center' }}>
-        <Text style={{ color: '#94a3b8', fontSize: 13 }}>Dose reminder will be sent at</Text>
-        <Text style={{ color: '#0f172a', fontSize: 18, fontWeight: '700', marginTop: 4 }}>
-          {hour}:{minute.toString().padStart(2, '0')} {ampm}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-function PickerColumn({
-  value,
-  onUp,
-  onDown,
-}: {
-  value: string;
-  onUp: () => void;
-  onDown: () => void;
-}) {
-  return (
-    <View style={{ alignItems: 'center', gap: 10 }}>
-      <Pressable
-        onPress={onUp}
-        style={{
-          width: 44,
-          height: 44,
-          borderRadius: 22,
-          backgroundColor: '#f1f5f9',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ color: BRAND, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>▲</Text>
-      </Pressable>
-
-      <Text
-        style={{
-          fontSize: 44,
-          fontWeight: '800',
-          color: '#0f172a',
-          minWidth: 68,
-          textAlign: 'center',
-        }}
-      >
-        {value}
+      {/* Mode hint */}
+      <Text style={{ color: '#94a3b8', fontSize: 12 }}>
+        {mode === 'hour' ? 'Select hour — will advance to minute' : 'Select minute'}
       </Text>
-
-      <Pressable
-        onPress={onDown}
-        style={{
-          width: 44,
-          height: 44,
-          borderRadius: 22,
-          backgroundColor: '#f1f5f9',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ color: BRAND, fontSize: 18, fontWeight: '700', lineHeight: 22 }}>▼</Text>
-      </Pressable>
     </View>
   );
 }

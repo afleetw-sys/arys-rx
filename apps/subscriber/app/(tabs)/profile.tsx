@@ -10,11 +10,12 @@ const MOCK_USER = {
   email: 'jane.doe@example.com',
   memberId: 'MBR-10042',
   enrolledAt: '2024-01-15',
-  drug: 'Humira',
-  dosage: '40mg/0.8mL',
-  frequency: 'Every 2 weeks',
-  doseTime: '8:00 AM',
 };
+
+const MOCK_MEDS = [
+  { name: 'Humira', dosage: '40mg/0.8mL', frequency: 'Every 2 weeks', doseTime: '8:00 AM' },
+  { name: 'Enbrel', dosage: '50mg/mL', frequency: 'Weekly', doseTime: '9:00 AM' },
+];
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
@@ -112,49 +113,52 @@ export default function ProfileScreen() {
       </View>
 
       {/* Medication schedule (read-only summary) */}
-      <View
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: 14,
-          borderWidth: 1,
-          borderColor: '#e2e8f0',
-          paddingHorizontal: 16,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.04,
-          shadowRadius: 4,
-          elevation: 1,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 11,
-            fontWeight: '700',
-            color: '#94a3b8',
-            letterSpacing: 0.8,
-            textTransform: 'uppercase',
-            paddingTop: 14,
-            paddingBottom: 4,
-          }}
-        >
-          Medication Schedule
-        </Text>
-        <Row label="Medication" value={`${MOCK_USER.drug} ${MOCK_USER.dosage}`} />
-        <Row label="Frequency" value={MOCK_USER.frequency} />
+      {MOCK_MEDS.map((med, i) => (
         <View
+          key={i}
           style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingVertical: 13,
+            backgroundColor: '#fff',
+            borderRadius: 14,
+            borderWidth: 1,
+            borderColor: '#e2e8f0',
+            paddingHorizontal: 16,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.04,
+            shadowRadius: 4,
+            elevation: 1,
           }}
         >
-          <Text style={{ color: '#64748b', fontSize: 14 }}>Dose time</Text>
-          <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '600' }}>
-            {MOCK_USER.doseTime}
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: '700',
+              color: '#94a3b8',
+              letterSpacing: 0.8,
+              textTransform: 'uppercase',
+              paddingTop: 14,
+              paddingBottom: 4,
+            }}
+          >
+            {med.name}
           </Text>
+          <Row label="Dosage" value={med.dosage} />
+          <Row label="Frequency" value={med.frequency} />
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              paddingVertical: 13,
+            }}
+          >
+            <Text style={{ color: '#64748b', fontSize: 14 }}>Dose time</Text>
+            <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '600' }}>
+              {med.doseTime}
+            </Text>
+          </View>
         </View>
-      </View>
+      ))}
 
       {/* Sign out */}
       <Pressable
