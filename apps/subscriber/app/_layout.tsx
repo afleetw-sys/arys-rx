@@ -21,9 +21,14 @@ export default function RootLayout() {
     <MobileFrame>
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: '#0f172a' },
-          headerTintColor: '#fff',
-          headerTitleStyle: { fontWeight: '700', fontSize: 17 },
+          headerStyle: {
+            backgroundColor: '#fff',
+            borderBottomWidth: 1,
+            borderBottomColor: '#f0f0f5',
+          },
+          headerTintColor: '#006aff',
+          headerTitleStyle: { fontWeight: '500', fontSize: 17, color: '#000' },
+          headerShadowVisible: false,
           contentStyle: { backgroundColor: '#f8fafc' },
         }}
       >

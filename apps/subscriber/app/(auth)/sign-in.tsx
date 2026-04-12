@@ -1,3 +1,4 @@
+import { BrandLogo } from '../../components/BrandLogo';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -25,7 +26,7 @@ function FocusInput({ label, style, ...props }: FocusInputProps) {
     <View
       style={{
         borderWidth: focused ? 2 : 1,
-        borderColor: focused ? BRAND : '#e2e8f0',
+        borderColor: focused ? BRAND : '#e9edf2',
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingTop: 11,
@@ -36,7 +37,7 @@ function FocusInput({ label, style, ...props }: FocusInputProps) {
       <Text
         style={{
           fontSize: 10,
-          fontWeight: '700',
+          fontWeight: '500',
           letterSpacing: 0.6,
           color: focused ? BRAND : '#94a3b8',
           marginBottom: 4,
@@ -77,25 +78,10 @@ export default function SignInScreen() {
         <View
           style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 }}
         >
-          <View
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 18,
-              backgroundColor: BRAND,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 18,
-              shadowColor: BRAND,
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.4,
-              shadowRadius: 20,
-              elevation: 12,
-            }}
-          >
-            <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800' }}>Rx</Text>
+          <View style={{ marginBottom: 18 }}>
+            <BrandLogo size={64} />
           </View>
-          <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: -0.5 }}>
+          <Text style={{ color: '#fff', fontSize: 26, fontWeight: '500', letterSpacing: -0.5 }}>
             Welcome back
           </Text>
           <Text style={{ color: '#64748b', fontSize: 14, marginTop: 6 }}>
@@ -148,13 +134,13 @@ export default function SignInScreen() {
               marginTop: 4,
             }}
           >
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Sign in</Text>
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '500' }}>Sign in</Text>
           </Pressable>
 
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: 4 }}>
             <Text style={{ color: '#94a3b8', fontSize: 14 }}>Don't have an account?</Text>
             <Pressable onPress={() => router.push('/(auth)/sign-up')}>
-              <Text style={{ color: BRAND, fontSize: 14, fontWeight: '600' }}>Create one</Text>
+              <Text style={{ color: BRAND, fontSize: 14, fontWeight: '500' }}>Create one</Text>
             </Pressable>
           </View>
         </View>

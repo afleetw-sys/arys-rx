@@ -1,7 +1,19 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const BRAND = '#006aff';
+
+const PAGE = '#f5f5fa';
+const CARD = '#ffffff';
+const INK = '#000000';
+const MUTED = '#8e8e93';
+const DIVIDER = '#f0f0f5';
+const CARD_RADIUS = 16;
+const SCREEN_PAD = 20;
+const CARD_GAP = 12;
+const CARD_PAD = 20;
 
 // TODO: Replace with real user from Clerk
 const MOCK_USER = {
@@ -17,168 +29,185 @@ const MOCK_MEDS = [
   { name: 'Enbrel', dosage: '50mg/mL', frequency: 'Weekly', doseTime: '9:00 AM' },
 ];
 
-function Row({ label, value }: { label: string; value: string }) {
+function CardRow({
+  label,
+  value,
+  showDivider,
+}: {
+  label: string;
+  value: string;
+  showDivider?: boolean;
+}) {
   return (
     <View
       style={{
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingVertical: 13,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f1f5f9',
+        paddingVertical: 14,
+        borderBottomWidth: showDivider ? 1 : 0,
+        borderBottomColor: DIVIDER,
       }}
     >
-      <Text style={{ color: '#64748b', fontSize: 14 }}>{label}</Text>
-      <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '600' }}>{value}</Text>
+      <Text style={{ color: MUTED, fontSize: 14 }}>{label}</Text>
+      <Text style={{ color: INK, fontSize: 14, fontWeight: '500' }}>{value}</Text>
     </View>
   );
 }
 
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <Text
+      style={{
+        fontSize: 11,
+        fontWeight: '500',
+        color: MUTED,
+        letterSpacing: 0.8,
+        textTransform: 'uppercase',
+        paddingTop: 4,
+        paddingBottom: 2,
+      }}
+    >
+      {title}
+    </Text>
+  );
+}
+
 export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
   const initials = `${MOCK_USER.firstName[0]}${MOCK_USER.lastName[0]}`;
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: '#f8fafc' }}
-      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 48, gap: 20 }}
-    >
-      {/* Avatar */}
-      <View style={{ alignItems: 'center', gap: 8 }}>
-        <View
-          style={{
-            width: 72,
-            height: 72,
-            borderRadius: 36,
-            backgroundColor: BRAND,
-            alignItems: 'center',
-            justifyContent: 'center',
-            shadowColor: BRAND,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 12,
-            elevation: 6,
-          }}
-        >
-          <Text style={{ color: '#fff', fontSize: 24, fontWeight: '800' }}>{initials}</Text>
-        </View>
-        <Text style={{ fontSize: 19, fontWeight: '800', color: '#0f172a' }}>
-          {MOCK_USER.firstName} {MOCK_USER.lastName}
-        </Text>
-        <Text style={{ fontSize: 14, color: '#94a3b8' }}>{MOCK_USER.email}</Text>
-      </View>
-
-      {/* Account info */}
+    <View style={{ flex: 1, backgroundColor: PAGE }}>
       <View
         style={{
-          backgroundColor: '#fff',
-          borderRadius: 14,
-          borderWidth: 1,
-          borderColor: '#e2e8f0',
-          paddingHorizontal: 16,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.04,
-          shadowRadius: 4,
-          elevation: 1,
+          paddingTop: Math.max(insets.top, 8),
+          paddingHorizontal: SCREEN_PAD,
+          paddingBottom: 10,
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: PAGE,
         }}
       >
-        <Text
-          style={{
-            fontSize: 11,
-            fontWeight: '700',
-            color: '#94a3b8',
-            letterSpacing: 0.8,
-            textTransform: 'uppercase',
-            paddingTop: 14,
-            paddingBottom: 4,
-          }}
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          style={{ marginLeft: -8, padding: 6 }}
         >
-          Account
-        </Text>
-        <Row label="Member ID" value={MOCK_USER.memberId} />
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingVertical: 13,
-          }}
-        >
-          <Text style={{ color: '#64748b', fontSize: 14 }}>Enrolled since</Text>
-          <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '600' }}>
-            {MOCK_USER.enrolledAt}
+          <Ionicons name="chevron-back" size={28} color={INK} />
+        </Pressable>
+        <Text style={{ fontSize: 17, fontWeight: '500', color: INK, marginLeft: -2 }}>Profile</Text>
+      </View>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: PAGE }}
+        contentContainerStyle={{
+          paddingHorizontal: SCREEN_PAD,
+          paddingTop: 2,
+          paddingBottom: 40,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+      <View
+        style={{
+          backgroundColor: CARD,
+          borderRadius: CARD_RADIUS,
+          paddingHorizontal: CARD_PAD,
+          paddingTop: 28,
+          paddingBottom: 28,
+          marginBottom: CARD_GAP,
+        }}
+      >
+        <View style={{ alignItems: 'center' }}>
+          <View
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: 48,
+              backgroundColor: BRAND,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 32, fontWeight: '500' }}>{initials}</Text>
+          </View>
+          <Text
+            style={{
+              fontSize: 20,
+              fontWeight: '500',
+              color: INK,
+              marginTop: 16,
+              textAlign: 'center',
+            }}
+          >
+            {MOCK_USER.firstName} {MOCK_USER.lastName}
+          </Text>
+          <Text style={{ fontSize: 14, color: MUTED, marginTop: 6, textAlign: 'center' }}>
+            {MOCK_USER.email}
           </Text>
         </View>
       </View>
 
-      {/* Medication schedule (read-only summary) */}
+      <View
+        style={{
+          backgroundColor: CARD,
+          borderRadius: CARD_RADIUS,
+          paddingHorizontal: CARD_PAD,
+          paddingTop: 18,
+          paddingBottom: 4,
+          marginBottom: CARD_GAP,
+        }}
+      >
+        <SectionHeader title="Account" />
+        <CardRow label="Member ID" value={MOCK_USER.memberId} showDivider />
+        <CardRow label="Enrolled since" value={MOCK_USER.enrolledAt} />
+      </View>
+
       {MOCK_MEDS.map((med, i) => (
         <View
           key={i}
           style={{
-            backgroundColor: '#fff',
-            borderRadius: 14,
-            borderWidth: 1,
-            borderColor: '#e2e8f0',
-            paddingHorizontal: 16,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.04,
-            shadowRadius: 4,
-            elevation: 1,
+            backgroundColor: CARD,
+            borderRadius: CARD_RADIUS,
+            paddingHorizontal: CARD_PAD,
+            paddingTop: 18,
+            paddingBottom: 4,
+            marginBottom: CARD_GAP,
           }}
         >
-          <Text
-            style={{
-              fontSize: 11,
-              fontWeight: '700',
-              color: '#94a3b8',
-              letterSpacing: 0.8,
-              textTransform: 'uppercase',
-              paddingTop: 14,
-              paddingBottom: 4,
-            }}
-          >
-            {med.name}
-          </Text>
-          <Row label="Dosage" value={med.dosage} />
-          <Row label="Frequency" value={med.frequency} />
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              paddingVertical: 13,
-            }}
-          >
-            <Text style={{ color: '#64748b', fontSize: 14 }}>Dose time</Text>
-            <Text style={{ color: '#0f172a', fontSize: 14, fontWeight: '600' }}>
-              {med.doseTime}
-            </Text>
-          </View>
+          <SectionHeader title={med.name} />
+          <CardRow label="Dosage" value={med.dosage} showDivider />
+          <CardRow label="Frequency" value={med.frequency} showDivider />
+          <CardRow label="Dose time" value={med.doseTime} />
         </View>
       ))}
 
-      {/* Sign out */}
       <Pressable
         onPress={() => router.replace('/(auth)/sign-in')}
         style={{
-          backgroundColor: '#fff',
-          borderRadius: 14,
-          borderWidth: 1,
-          borderColor: '#fecdd3',
-          padding: 16,
+          backgroundColor: CARD,
+          borderRadius: CARD_RADIUS,
+          paddingVertical: 16,
           alignItems: 'center',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.04,
-          shadowRadius: 4,
-          elevation: 1,
+          marginBottom: CARD_GAP,
         }}
       >
-        <Text style={{ fontSize: 15, fontWeight: '700', color: '#dc2626' }}>Sign out</Text>
+        <Text style={{ fontSize: 15, fontWeight: '500', color: '#dc2626' }}>Sign out</Text>
       </Pressable>
-    </ScrollView>
+
+      <Pressable
+        onPress={() => router.push('/download')}
+        style={{
+          backgroundColor: CARD,
+          borderRadius: CARD_RADIUS,
+          paddingVertical: 16,
+          alignItems: 'center',
+        }}
+      >
+        <Text style={{ fontSize: 15, fontWeight: '500', color: BRAND }}>Restart prototype</Text>
+      </Pressable>
+      </ScrollView>
+    </View>
   );
 }

@@ -1,3 +1,5 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { BrandLogo } from '../components/BrandLogo';
 import { router } from 'expo-router';
 import { SafeAreaView, Text, View } from 'react-native';
 
@@ -32,11 +34,6 @@ function KeyRow({
             borderRadius: 5,
             alignItems: 'center',
             justifyContent: 'center',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.4,
-            shadowRadius: 0,
-            elevation: 2,
           }}
         >
           <Text style={{ color: '#fff', fontSize: k.length > 1 ? 13 : 17, fontWeight: '400' }}>
@@ -62,7 +59,7 @@ export default function DownloadScreen() {
           paddingBottom: 6,
         }}
       >
-        <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>10:19</Text>
+        <Text style={{ color: '#fff', fontSize: 15, fontWeight: '500' }}>10:19</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           {/* Signal bars */}
           <View style={{ flexDirection: 'row', gap: 2, alignItems: 'flex-end' }}>
@@ -120,21 +117,11 @@ export default function DownloadScreen() {
 
         {/* Centered contact */}
         <View style={{ flex: 1, alignItems: 'center' }}>
-          <View
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: '#48484a',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 3,
-            }}
-          >
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Rx</Text>
+          <View style={{ marginBottom: 3 }}>
+            <BrandLogo size={40} />
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>27979</Text>
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '500' }}>27979</Text>
             <Text style={{ color: IOS_BLUE, fontSize: 13 }}>›</Text>
           </View>
         </View>
@@ -162,8 +149,8 @@ export default function DownloadScreen() {
           }}
         >
           <Text style={{ color: '#e5e5e7', fontSize: 15, lineHeight: 22 }}>
-            Hi Jane! 👋{'\n\n'}Your employer has enrolled you in the{' '}
-            <Text style={{ fontWeight: '700', color: '#fff' }}>arys·rx</Text> specialty
+            Hi Jane!{'\n\n'}Your employer has enrolled you in the{' '}
+            <Text style={{ fontWeight: '500', color: '#fff' }}>arys·rx</Text> specialty
             medication adherence program.{'\n\n'}Tap the link below to download the app and
             complete your enrollment:{'\n'}
             <Text
@@ -208,7 +195,7 @@ export default function DownloadScreen() {
         >
           <Text style={{ color: '#48484a', fontSize: 15 }}>Text Message · SMS</Text>
         </View>
-        <Text style={{ color: '#636366', fontSize: 22 }}>🎤</Text>
+        <Ionicons name="mic-outline" size={22} color="#636366" />
       </View>
 
       {/* Keyboard */}
@@ -225,24 +212,30 @@ export default function DownloadScreen() {
             paddingBottom: 6,
           }}
         >
-          {[
-            { label: '123', flex: 1.5 },
-            { label: '🌐', flex: 1.5 },
-            { label: 'space', flex: 5 },
-            { label: 'return', flex: 2 },
-          ].map((k) => (
+          {(
+            [
+              { key: '123', label: '123', flex: 1.5 },
+              { key: 'globe', icon: 'globe-outline' as const, flex: 1.5 },
+              { key: 'space', label: 'space', flex: 5 },
+              { key: 'return', label: 'return', flex: 2 },
+            ] as const
+          ).map((k) => (
             <View
-              key={k.label}
+              key={k.key}
               style={{
                 flex: k.flex,
                 height: 42,
                 borderRadius: 5,
-                backgroundColor: k.label === 'space' ? '#4a4a4e' : '#3a3a3c',
+                backgroundColor: 'label' in k && k.label === 'space' ? '#4a4a4e' : '#3a3a3c',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ color: '#fff', fontSize: 14 }}>{k.label}</Text>
+              {'icon' in k ? (
+                <Ionicons name={k.icon} size={18} color="#fff" />
+              ) : (
+                <Text style={{ color: '#fff', fontSize: 14 }}>{k.label}</Text>
+              )}
             </View>
           ))}
         </View>

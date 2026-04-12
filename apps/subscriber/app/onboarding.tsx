@@ -1,36 +1,11 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { ASSIGNED_MEDS, FREQUENCY_OPTIONS } from '../lib/assignedMedications';
+import { saveSubscriberScheduleFromConfigs } from '../lib/subscriberSchedule';
 
 const BRAND = '#006aff';
-
-// ─── Static data ─────────────────────────────────────────────────────────────
-
-const ASSIGNED_MEDS = [
-  {
-    id: 'drug-001',
-    name: 'Humira',
-    genericName: 'adalimumab',
-    manufacturer: 'AbbVie',
-    dosage: '40mg/0.8mL',
-    route: 'Subcutaneous injection',
-  },
-  {
-    id: 'drug-002',
-    name: 'Enbrel',
-    genericName: 'etanercept',
-    manufacturer: 'Amgen / Pfizer',
-    dosage: '50mg/mL',
-    route: 'Subcutaneous injection',
-  },
-];
-
-const FREQUENCY_OPTIONS = [
-  { id: 'daily', label: 'Daily', description: 'Once every day' },
-  { id: 'weekly', label: 'Weekly', description: 'Once every week' },
-  { id: 'biweekly', label: 'Every 2 weeks', description: 'Every other week' },
-  { id: 'monthly', label: 'Monthly', description: 'Once a month' },
-];
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -95,7 +70,7 @@ export default function OnboardingScreen() {
     return true;
   }
 
-  function advance() {
+  async function advance() {
     if (phase.kind === 'intro') {
       setPhase({ kind: 'med', medIndex: 0 });
     } else {
@@ -103,6 +78,7 @@ export default function OnboardingScreen() {
       if (next < ASSIGNED_MEDS.length) {
         setPhase({ kind: 'med', medIndex: next });
       } else {
+        await saveSubscriberScheduleFromConfigs(medConfigs);
         router.replace('/(tabs)/');
       }
     }
@@ -134,7 +110,7 @@ export default function OnboardingScreen() {
           style={{
             color: 'rgba(255,255,255,0.45)',
             fontSize: 11,
-            fontWeight: '700',
+            fontWeight: '500',
             letterSpacing: 0.8,
             marginBottom: 8,
           }}
@@ -144,7 +120,7 @@ export default function OnboardingScreen() {
             ? `  ·  ${ASSIGNED_MEDS[phase.medIndex].name.toUpperCase()}`
             : ''}
         </Text>
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', marginBottom: 6 }}>
+        <Text style={{ color: '#fff', fontSize: 22, fontWeight: '500', marginBottom: 6 }}>
           {phaseTitle(phase)}
         </Text>
         <Text style={{ color: 'rgba(255,255,255,0.55)', fontSize: 14, lineHeight: 20 }}>
@@ -192,7 +168,7 @@ export default function OnboardingScreen() {
         {/* Fixed CTA */}
         <View style={{ paddingHorizontal: 24, paddingBottom: 28, paddingTop: 12 }}>
           <Pressable
-            onPress={advance}
+            onPress={() => void advance()}
             disabled={!canContinue()}
             style={{
               backgroundColor: BRAND,
@@ -202,7 +178,7 @@ export default function OnboardingScreen() {
               opacity: canContinue() ? 1 : 0.35,
             }}
           >
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '500' }}>
               {ctaLabel(phase)}
             </Text>
           </Pressable>
@@ -224,13 +200,8 @@ function StepMedications() {
             backgroundColor: '#fff',
             borderRadius: 14,
             borderWidth: 1,
-            borderColor: '#e2e8f0',
+            borderColor: '#e9edf2',
             padding: 18,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.04,
-            shadowRadius: 4,
-            elevation: 1,
           }}
         >
           <View
@@ -241,7 +212,7 @@ function StepMedications() {
               marginBottom: 10,
             }}
           >
-            <Text style={{ fontSize: 20, fontWeight: '800', color: '#0f172a' }}>
+            <Text style={{ fontSize: 20, fontWeight: '500', color: '#0f172a' }}>
               {med.name}
             </Text>
             <View
@@ -252,9 +223,10 @@ function StepMedications() {
                 paddingVertical: 4,
               }}
             >
-              <Text style={{ color: BRAND, fontSize: 11, fontWeight: '600' }}>
-                📹 Video required
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Ionicons name="videocam-outline" size={13} color={BRAND} />
+                <Text style={{ color: BRAND, fontSize: 11, fontWeight: '500' }}>Video required</Text>
+              </View>
             </View>
           </View>
           <Text style={{ color: '#64748b', fontSize: 13, marginBottom: 3 }}>
@@ -281,7 +253,7 @@ function StepMedications() {
           alignItems: 'flex-start',
         }}
       >
-        <Text style={{ fontSize: 14 }}>ℹ️</Text>
+        <Ionicons name="information-circle-outline" size={18} color="#b45309" />
         <Text style={{ color: '#92400e', fontSize: 13, flex: 1, lineHeight: 18 }}>
           Your medications are assigned by your health plan. Contact your care
           team if anything looks incorrect.
@@ -326,7 +298,7 @@ function StepSchedule({
         <Text
           style={{
             fontSize: 11,
-            fontWeight: '700',
+            fontWeight: '500',
             color: '#94a3b8',
             letterSpacing: 0.8,
             marginBottom: 10,
@@ -345,20 +317,15 @@ function StepSchedule({
                   backgroundColor: '#fff',
                   borderRadius: 12,
                   borderWidth: active ? 2 : 1,
-                  borderColor: active ? BRAND : '#e2e8f0',
+                  borderColor: active ? BRAND : '#e9edf2',
                   padding: 14,
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.04,
-                  shadowRadius: 4,
-                  elevation: 1,
                 }}
               >
                 <View>
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a' }}>
+                  <Text style={{ fontSize: 15, fontWeight: '500', color: '#0f172a' }}>
                     {opt.label}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#94a3b8', marginTop: 1 }}>
@@ -371,15 +338,13 @@ function StepSchedule({
                     height: 22,
                     borderRadius: 11,
                     borderWidth: active ? 0 : 1.5,
-                    borderColor: '#cbd5e1',
+                    borderColor: '#dfe4ea',
                     backgroundColor: active ? BRAND : 'transparent',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  {active && (
-                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>✓</Text>
-                  )}
+                  {active && <Ionicons name="checkmark" size={14} color="#fff" />}
                 </View>
               </Pressable>
             );
@@ -393,7 +358,7 @@ function StepSchedule({
           <Text
             style={{
               fontSize: 11,
-              fontWeight: '700',
+              fontWeight: '500',
               color: '#94a3b8',
               letterSpacing: 0.8,
               marginBottom: 10,
@@ -411,7 +376,7 @@ function StepSchedule({
           <Text
             style={{
               fontSize: 11,
-              fontWeight: '700',
+              fontWeight: '500',
               color: '#94a3b8',
               letterSpacing: 0.8,
               marginBottom: 16,
@@ -486,13 +451,13 @@ function DateStrip({
               borderRadius: 12,
               backgroundColor: isSelected ? BRAND : '#fff',
               borderWidth: isSelected ? 2 : 1,
-              borderColor: isSelected ? BRAND : '#e2e8f0',
+              borderColor: isSelected ? BRAND : '#e9edf2',
             }}
           >
             <Text
               style={{
                 fontSize: 10,
-                fontWeight: '600',
+                fontWeight: '500',
                 color: isSelected ? 'rgba(255,255,255,0.8)' : '#94a3b8',
               }}
             >
@@ -501,7 +466,7 @@ function DateStrip({
             <Text
               style={{
                 fontSize: 16,
-                fontWeight: '700',
+                fontWeight: '500',
                 color: isSelected ? '#fff' : '#0f172a',
                 marginTop: 4,
               }}
@@ -585,19 +550,14 @@ function MaterialClock({
           paddingHorizontal: 20,
           paddingVertical: 12,
           borderWidth: 1,
-          borderColor: '#e2e8f0',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.04,
-          shadowRadius: 4,
-          elevation: 1,
+          borderColor: '#e9edf2',
         }}
       >
         {/* Hour tab */}
         <Pressable
           onPress={() => setMode('hour')}
           style={{
-            backgroundColor: mode === 'hour' ? BRAND : '#f1f5f9',
+            backgroundColor: mode === 'hour' ? BRAND : '#f5f7fa',
             borderRadius: 10,
             paddingHorizontal: 14,
             paddingVertical: 8,
@@ -625,7 +585,7 @@ function MaterialClock({
         <Pressable
           onPress={() => setMode('minute')}
           style={{
-            backgroundColor: mode === 'minute' ? BRAND : '#f1f5f9',
+            backgroundColor: mode === 'minute' ? BRAND : '#f5f7fa',
             borderRadius: 10,
             paddingHorizontal: 14,
             paddingVertical: 8,
@@ -661,7 +621,7 @@ function MaterialClock({
               <Text
                 style={{
                   fontSize: 13,
-                  fontWeight: '700',
+                  fontWeight: '500',
                   color: ampm === p ? '#fff' : '#94a3b8',
                 }}
               >
@@ -737,7 +697,7 @@ function MaterialClock({
                 <Text
                   style={{
                     fontSize: 14,
-                    fontWeight: isSelected ? '700' : '500',
+                    fontWeight: isSelected ? '500' : '400',
                     color: isSelected ? '#fff' : '#1e293b',
                   }}
                 >
@@ -771,7 +731,7 @@ function MaterialClock({
                 <Text
                   style={{
                     fontSize: 12,
-                    fontWeight: isSelected ? '700' : '500',
+                    fontWeight: isSelected ? '500' : '400',
                     color: isSelected ? '#fff' : '#1e293b',
                   }}
                 >

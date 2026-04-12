@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { submitAdherenceRecord } from '../../lib/api';
 import { Button, Card } from '@arys-rx/ui';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -40,7 +41,7 @@ export default function ReviewScreen() {
             gap: 10,
           }}
         >
-          <Text style={{ fontSize: 44 }}>🎬</Text>
+          <Ionicons name="film-outline" size={48} color="#64748b" />
           <Text style={{ color: '#64748b', fontSize: 15, fontWeight: '500' }}>
             {uri ? 'Recording ready' : 'No recording'}
           </Text>
@@ -56,10 +57,10 @@ export default function ReviewScreen() {
 
         {/* Drug info card */}
         <Card>
-          <Text style={{ fontSize: 12, fontWeight: '600', color: '#94a3b8', marginBottom: 6 }}>
+          <Text style={{ fontSize: 12, fontWeight: '500', color: '#94a3b8', marginBottom: 6 }}>
             Submitting for
           </Text>
-          <Text style={{ fontSize: 18, fontWeight: '800', color: '#0f172a', marginBottom: 2 }}>
+          <Text style={{ fontSize: 18, fontWeight: '500', color: '#0f172a', marginBottom: 2 }}>
             Humira
           </Text>
           <Text style={{ fontSize: 14, color: '#94a3b8' }}>
