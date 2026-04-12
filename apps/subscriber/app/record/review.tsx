@@ -1,5 +1,6 @@
 import { submitAdherenceRecord } from '../../lib/api';
 import { Button, Card } from '@arys-rx/ui';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Alert, SafeAreaView, Text, View } from 'react-native';
@@ -40,7 +41,7 @@ export default function ReviewScreen() {
             gap: 10,
           }}
         >
-          <Text style={{ fontSize: 44 }}>🎬</Text>
+          <MaterialIcons name="movie" size={56} color="#334155" />
           <Text style={{ color: '#64748b', fontSize: 15, fontWeight: '500' }}>
             {uri ? 'Recording ready' : 'No recording'}
           </Text>

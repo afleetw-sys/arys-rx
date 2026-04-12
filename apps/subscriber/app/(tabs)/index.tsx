@@ -1,5 +1,6 @@
 import { getAllAdherenceHistory } from '../../lib/api';
 import type { AdherenceRecord } from '@arys-rx/types';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -154,7 +155,7 @@ export default function HomeScreen() {
           >
             <View style={{ backgroundColor: BRAND, padding: 18 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13 }}>🕐</Text>
+                <MaterialIcons name="schedule" size={14} color="rgba(255,255,255,0.8)" />
                 <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, fontWeight: '600' }}>
                   Next Scheduled Dose
                 </Text>
@@ -199,7 +200,7 @@ export default function HomeScreen() {
                   gap: 8,
                 }}
               >
-                <Text style={{ color: '#fff', fontSize: 14 }}>📹</Text>
+                <MaterialIcons name="videocam" size={20} color="#fff" />
                 <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>Record Dose</Text>
               </Pressable>
             </View>
@@ -289,7 +290,7 @@ export default function HomeScreen() {
                     paddingVertical: 6,
                   }}
                 >
-                  <Text style={{ fontSize: 12 }}>✏️</Text>
+                  <MaterialIcons name="edit" size={13} color={BRAND} />
                   <Text style={{ fontSize: 13, fontWeight: '600', color: BRAND }}>Edit</Text>
                 </Pressable>
               </View>
@@ -318,7 +319,7 @@ export default function HomeScreen() {
                       </Text>
                     </View>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                      <Text style={{ fontSize: 12 }}>📅</Text>
+                      <MaterialIcons name="event" size={14} color="#94a3b8" />
                       <Text style={{ fontSize: 13, color: '#94a3b8' }}>Scheduled</Text>
                     </View>
                   </View>
@@ -349,7 +350,7 @@ export default function HomeScreen() {
             <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a' }}>
               View Dose History
             </Text>
-            <Text style={{ fontSize: 18, color: BRAND }}>→</Text>
+            <MaterialIcons name="arrow_forward" size={20} color={BRAND} />
           </Pressable>
         </ScrollView>
 
@@ -373,7 +374,7 @@ export default function HomeScreen() {
             elevation: 8,
           }}
         >
-          <Text style={{ fontSize: 20 }}>🔄</Text>
+          <MaterialIcons name="refresh" size={24} color="#fff" />
         </Pressable>
       </View>
     </SafeAreaView>

@@ -1,3 +1,4 @@
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
@@ -252,9 +253,10 @@ function StepMedications() {
                 paddingVertical: 4,
               }}
             >
-              <Text style={{ color: BRAND, fontSize: 11, fontWeight: '600' }}>
-                📹 Video required
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <MaterialIcons name="videocam" size={12} color={BRAND} />
+                <Text style={{ color: BRAND, fontSize: 11, fontWeight: '600' }}>Video required</Text>
+              </View>
             </View>
           </View>
           <Text style={{ color: '#64748b', fontSize: 13, marginBottom: 3 }}>
@@ -281,7 +283,7 @@ function StepMedications() {
           alignItems: 'flex-start',
         }}
       >
-        <Text style={{ fontSize: 14 }}>ℹ️</Text>
+        <MaterialIcons name="info" size={18} color="#d97706" />
         <Text style={{ color: '#92400e', fontSize: 13, flex: 1, lineHeight: 18 }}>
           Your medications are assigned by your health plan. Contact your care
           team if anything looks incorrect.
@@ -378,7 +380,7 @@ function StepSchedule({
                   }}
                 >
                   {active && (
-                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>✓</Text>
+                    <MaterialIcons name="check" size={13} color="#fff" />
                   )}
                 </View>
               </Pressable>

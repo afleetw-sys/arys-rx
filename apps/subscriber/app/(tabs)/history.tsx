@@ -1,5 +1,6 @@
 import { getAllAdherenceHistory } from '../../lib/api';
 import type { AdherenceRecord } from '@arys-rx/types';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 
@@ -121,9 +122,11 @@ export default function HistoryScreen() {
                     flexShrink: 0,
                   }}
                 >
-                  <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>
-                    {isTaken ? '✓' : '✗'}
-                  </Text>
+                  <MaterialIcons
+                    name={isTaken ? 'check' : 'close'}
+                    size={18}
+                    color="#fff"
+                  />
                 </View>
 
                 {/* Details */}
@@ -160,7 +163,7 @@ export default function HistoryScreen() {
                 {/* Video link */}
                 {r.videoId && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                    <Text style={{ fontSize: 12 }}>🎥</Text>
+                    <MaterialIcons name="videocam" size={16} color={BRAND} />
                     <Text style={{ fontSize: 13, color: BRAND, fontWeight: '500' }}>Video</Text>
                   </View>
                 )}
