@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, Text, View } from 'react-native';
+import { Modal, Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from 'react-native';
 import { ASSIGNED_MEDS, FREQUENCY_OPTIONS } from '../lib/assignedMedications';
 import { saveSubscriberScheduleFromConfigs } from '../lib/subscriberSchedule';
 
@@ -16,7 +16,7 @@ interface MedConfig {
   frequency: string | null;
   lastDoseDate: Date | null;
   hour: number;   // 1–12
-  minute: number; // 0, 5, 10, … 55
+  minute: number; // 0–59
   ampm: 'AM' | 'PM';
 }
 
@@ -28,12 +28,12 @@ function phaseStepNum(phase: Phase): number {
 
 function phaseTitle(phase: Phase): string {
   if (phase.kind === 'intro') return 'Your Medications';
-  return `${ASSIGNED_MEDS[phase.medIndex].name} Schedule`;
+  return 'Medication Schedule';
 }
 
 function phaseSubtitle(phase: Phase): string {
   if (phase.kind === 'intro') return 'These specialty medications have been assigned to you.';
-  return `Configure when you take ${ASSIGNED_MEDS[phase.medIndex].name}.`;
+  return 'Set how often and when you take this medication.';
 }
 
 function ctaLabel(phase: Phase): string {
@@ -41,10 +41,27 @@ function ctaLabel(phase: Phase): string {
   return phase.medIndex === ASSIGNED_MEDS.length - 1 ? 'Get Started' : 'Continue';
 }
 
+function validationMessage(phase: Phase, configs: MedConfig[]): string | null {
+  if (phase.kind === 'intro') return null;
+  const cfg = configs[phase.medIndex];
+  if (!cfg.frequency) return 'Select how often you take this medication.';
+  if (cfg.frequency !== 'daily' && !cfg.lastDoseDate) return 'Choose the date of your last dose.';
+  return null;
+}
+
 // ─── Screen ──────────────────────────────────────────────────────────────────
 
+function isEditScheduleParam(v: string | string[] | undefined): boolean {
+  const s = Array.isArray(v) ? v[0] : v;
+  return s === '1' || s === 'true';
+}
+
 export default function OnboardingScreen() {
+  const { edit } = useLocalSearchParams<{ edit?: string | string[] }>();
+  const isEditingSchedule = isEditScheduleParam(edit);
+
   const [phase, setPhase] = useState<Phase>({ kind: 'intro' });
+  const [scheduleSubmitAttempted, setScheduleSubmitAttempted] = useState(false);
   const [medConfigs, setMedConfigs] = useState<MedConfig[]>(
     ASSIGNED_MEDS.map((m) => ({
       drugId: m.id,
@@ -62,26 +79,47 @@ export default function OnboardingScreen() {
     );
   }
 
-  function canContinue(): boolean {
-    if (phase.kind === 'intro') return true;
-    const cfg = medConfigs[phase.medIndex];
-    if (!cfg.frequency) return false;
-    if (cfg.frequency !== 'daily' && !cfg.lastDoseDate) return false;
-    return true;
-  }
+  const currentValidationMessage = validationMessage(phase, medConfigs);
+
+  useEffect(() => {
+    if (phase.kind === 'med' && !currentValidationMessage) {
+      setScheduleSubmitAttempted(false);
+    }
+  }, [phase, currentValidationMessage]);
 
   async function advance() {
     if (phase.kind === 'intro') {
+      setScheduleSubmitAttempted(false);
       setPhase({ kind: 'med', medIndex: 0 });
-    } else {
-      const next = phase.medIndex + 1;
-      if (next < ASSIGNED_MEDS.length) {
-        setPhase({ kind: 'med', medIndex: next });
-      } else {
-        await saveSubscriberScheduleFromConfigs(medConfigs);
-        router.replace('/(tabs)/');
-      }
+      return;
     }
+    const msg = validationMessage(phase, medConfigs);
+    if (msg) {
+      setScheduleSubmitAttempted(true);
+      return;
+    }
+    setScheduleSubmitAttempted(false);
+    const next = phase.medIndex + 1;
+    if (next < ASSIGNED_MEDS.length) {
+      setPhase({ kind: 'med', medIndex: next });
+    } else {
+      await saveSubscriberScheduleFromConfigs(medConfigs);
+      router.replace('/(tabs)/');
+    }
+  }
+
+  function goBack() {
+    if (phase.kind === 'intro') {
+      router.back();
+      return;
+    }
+    if (phase.medIndex === 0) {
+      setScheduleSubmitAttempted(false);
+      setPhase({ kind: 'intro' });
+      return;
+    }
+    setScheduleSubmitAttempted(false);
+    setPhase({ kind: 'med', medIndex: phase.medIndex - 1 });
   }
 
   const stepNum = phaseStepNum(phase);
@@ -91,7 +129,6 @@ export default function OnboardingScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#0f172a' }}>
       {/* Dark header */}
       <View style={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: 28 }}>
-        {/* Progress segments */}
         <View style={{ flexDirection: 'row', gap: 5, marginBottom: 22 }}>
           {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
             <View
@@ -106,20 +143,36 @@ export default function OnboardingScreen() {
           ))}
         </View>
 
-        <Text
+        <View
           style={{
-            color: 'rgba(255,255,255,0.45)',
-            fontSize: 11,
-            fontWeight: '500',
-            letterSpacing: 0.8,
+            flexDirection: 'row',
+            alignItems: 'center',
             marginBottom: 8,
+            gap: 12,
           }}
         >
-          STEP {stepNum} OF {TOTAL_STEPS}
-          {phase.kind === 'med' && ASSIGNED_MEDS.length > 1
-            ? `  ·  ${ASSIGNED_MEDS[phase.medIndex].name.toUpperCase()}`
-            : ''}
-        </Text>
+          <Text
+            style={{
+              flex: 1,
+              color: 'rgba(255,255,255,0.45)',
+              fontSize: 11,
+              fontWeight: '500',
+              letterSpacing: 0.8,
+            }}
+          >
+            STEP {stepNum} OF {TOTAL_STEPS}
+          </Text>
+          {isEditingSchedule ? (
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={14}
+              accessibilityLabel="Close"
+              style={{ padding: 4, marginRight: -4 }}
+            >
+              <Ionicons name="close" size={24} color="rgba(255,255,255,0.92)" />
+            </Pressable>
+          ) : null}
+        </View>
         <Text style={{ color: '#fff', fontSize: 22, fontWeight: '500', marginBottom: 6 }}>
           {phaseTitle(phase)}
         </Text>
@@ -146,6 +199,7 @@ export default function OnboardingScreen() {
 
           {phase.kind === 'med' && cfg && (
             <StepSchedule
+              medication={ASSIGNED_MEDS[phase.medIndex]}
               frequency={cfg.frequency}
               onFrequencyChange={(v) =>
                 updateConfig(phase.medIndex, {
@@ -167,21 +221,49 @@ export default function OnboardingScreen() {
 
         {/* Fixed CTA */}
         <View style={{ paddingHorizontal: 24, paddingBottom: 28, paddingTop: 12 }}>
-          <Pressable
-            onPress={() => void advance()}
-            disabled={!canContinue()}
-            style={{
-              backgroundColor: BRAND,
-              borderRadius: 12,
-              paddingVertical: 16,
-              alignItems: 'center',
-              opacity: canContinue() ? 1 : 0.35,
-            }}
-          >
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '500' }}>
-              {ctaLabel(phase)}
+          {phase.kind === 'med' && scheduleSubmitAttempted && currentValidationMessage ? (
+            <Text style={{ color: '#b91c1c', fontSize: 13, marginBottom: 10 }}>{currentValidationMessage}</Text>
+          ) : (
+            <Text style={{ color: '#64748b', fontSize: 13, marginBottom: 10 }}>
+              {phase.kind === 'intro'
+                ? 'Review your assigned medications, then continue.'
+                : 'Set this schedule now and you can update it later.'}
             </Text>
-          </Pressable>
+          )}
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'stretch' }}>
+            {phase.kind === 'med' ? (
+              <Pressable
+                onPress={goBack}
+                style={{
+                  flex: 1,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: '#cbd5e1',
+                  paddingVertical: 16,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#fff',
+                }}
+              >
+                <Text style={{ fontSize: 16, fontWeight: '500', color: '#0f172a' }}>Back</Text>
+              </Pressable>
+            ) : null}
+            <Pressable
+              onPress={() => void advance()}
+              style={{
+                flex: 1,
+                backgroundColor: BRAND,
+                borderRadius: 12,
+                paddingVertical: 16,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '500' }}>
+                {ctaLabel(phase)}
+              </Text>
+            </Pressable>
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -266,6 +348,7 @@ function StepMedications() {
 // ─── Step 2+: Combined schedule step ─────────────────────────────────────────
 
 function StepSchedule({
+  medication,
   frequency,
   onFrequencyChange,
   lastDoseDate,
@@ -277,6 +360,7 @@ function StepSchedule({
   onMinuteChange,
   onAmpmChange,
 }: {
+  medication: (typeof ASSIGNED_MEDS)[number];
   frequency: string | null;
   onFrequencyChange: (v: string) => void;
   lastDoseDate: Date | null;
@@ -293,6 +377,26 @@ function StepSchedule({
 
   return (
     <View style={{ gap: 24 }}>
+      <View
+        style={{
+          backgroundColor: '#fff',
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: '#e9edf2',
+          paddingHorizontal: 14,
+          paddingVertical: 12,
+          gap: 4,
+        }}
+      >
+        <Text style={{ fontSize: 11, fontWeight: '500', color: '#94a3b8', letterSpacing: 0.7 }}>
+          SCHEDULING FOR
+        </Text>
+        <Text style={{ fontSize: 20, fontWeight: '600', color: '#0f172a' }}>{medication.name}</Text>
+        <Text style={{ fontSize: 13, color: '#64748b' }}>
+          {medication.dosage} · {medication.route}
+        </Text>
+      </View>
+
       {/* Frequency */}
       <View>
         <Text
@@ -366,7 +470,7 @@ function StepSchedule({
           >
             WHEN WAS YOUR LAST DOSE?
           </Text>
-          <DateStrip selected={lastDoseDate} onSelect={onLastDoseDateChange} />
+          <DateField selected={lastDoseDate} onSelect={onLastDoseDateChange} />
         </View>
       )}
 
@@ -384,7 +488,7 @@ function StepSchedule({
           >
             {isDaily ? 'WHAT TIME DO YOU TAKE IT?' : 'AT WHAT TIME?'}
           </Text>
-          <MaterialClock
+          <TimeNumberInputs
             hour={hour}
             minute={minute}
             ampm={ampm}
@@ -398,117 +502,197 @@ function StepSchedule({
   );
 }
 
-// ─── Date strip ───────────────────────────────────────────────────────────────
+// ─── Date picker modal ────────────────────────────────────────────────────────
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTH_LABELS = [
   'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
 
-function DateStrip({
+function startOfMonth(d: Date): Date {
+  const out = new Date(d);
+  out.setDate(1);
+  out.setHours(0, 0, 0, 0);
+  return out;
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function formatDateLong(d: Date): string {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function DateField({
   selected,
   onSelect,
 }: {
   selected: Date | null;
   onSelect: (d: Date) => void;
 }) {
-  const scrollRef = useRef<ScrollView>(null);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const [open, setOpen] = useState(false);
+  const [displayMonth, setDisplayMonth] = useState<Date>(startOfMonth(selected ?? today));
 
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() - (13 - i));
-    return d;
-  });
+  const firstDow = new Date(displayMonth.getFullYear(), displayMonth.getMonth(), 1).getDay();
+  const daysInMonth = new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 0).getDate();
+  const cells: Array<Date | null> = [
+    ...Array.from({ length: firstDow }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, i) => {
+      const d = new Date(displayMonth);
+      d.setDate(i + 1);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    }),
+  ];
+  while (cells.length % 7 !== 0) cells.push(null);
 
-  useEffect(() => {
-    // Scroll to show today (rightmost)
-    scrollRef.current?.scrollToEnd({ animated: false });
-  }, []);
+  function openPicker() {
+    setDisplayMonth(startOfMonth(selected ?? today));
+    setOpen(true);
+  }
+
+  function prevMonth() {
+    const d = new Date(displayMonth);
+    d.setMonth(d.getMonth() - 1);
+    setDisplayMonth(startOfMonth(d));
+  }
+
+  function nextMonth() {
+    const d = new Date(displayMonth);
+    d.setMonth(d.getMonth() + 1);
+    if (startOfMonth(d).getTime() > startOfMonth(today).getTime()) return;
+    setDisplayMonth(startOfMonth(d));
+  }
+
+  const canGoNext = startOfMonth(displayMonth).getTime() < startOfMonth(today).getTime();
 
   return (
-    <ScrollView
-      ref={scrollRef}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: 8, paddingVertical: 4 }}
-    >
-      {days.map((d, i) => {
-        const isSelected = selected
-          ? d.toDateString() === selected.toDateString()
-          : false;
-        const isToday = d.toDateString() === today.toDateString();
-        return (
-          <Pressable
-            key={i}
-            onPress={() => onSelect(d)}
+    <>
+      <Pressable
+        onPress={openPicker}
+        style={{
+          backgroundColor: '#fff',
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: '#e9edf2',
+          paddingHorizontal: 14,
+          paddingVertical: 14,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <View>
+          <Text style={{ fontSize: 15, fontWeight: '500', color: '#0f172a' }}>
+            {selected ? formatDateLong(selected) : 'Select date'}
+          </Text>
+          <Text style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
+            Tap to choose from calendar
+          </Text>
+        </View>
+        <Ionicons name="calendar-outline" size={20} color={BRAND} />
+      </Pressable>
+
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(2,6,23,0.45)',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+          }}
+        >
+          <Pressable style={{ flex: 1 }} onPress={() => setOpen(false)} />
+          <View
             style={{
-              width: 52,
-              alignItems: 'center',
-              paddingVertical: 10,
-              borderRadius: 12,
-              backgroundColor: isSelected ? BRAND : '#fff',
-              borderWidth: isSelected ? 2 : 1,
-              borderColor: isSelected ? BRAND : '#e9edf2',
+              width: '100%',
+              maxWidth: 430,
+              backgroundColor: '#fff',
+              borderTopLeftRadius: 22,
+              borderTopRightRadius: 22,
+              paddingHorizontal: 20,
+              paddingTop: 14,
+              paddingBottom: 24,
             }}
           >
-            <Text
-              style={{
-                fontSize: 10,
-                fontWeight: '500',
-                color: isSelected ? 'rgba(255,255,255,0.8)' : '#94a3b8',
-              }}
-            >
-              {isToday ? 'TODAY' : DAY_LABELS[d.getDay()]}
-            </Text>
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: '500',
-                color: isSelected ? '#fff' : '#0f172a',
-                marginTop: 4,
-              }}
-            >
-              {d.getDate()}
-            </Text>
-            <Text
-              style={{
-                fontSize: 10,
-                color: isSelected ? 'rgba(255,255,255,0.8)' : '#94a3b8',
-                marginTop: 2,
-              }}
-            >
-              {MONTH_LABELS[d.getMonth()]}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
+            <View style={{ alignItems: 'center', marginBottom: 12 }}>
+              <View style={{ width: 42, height: 4, borderRadius: 2, backgroundColor: '#d6dbe3' }} />
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <Pressable onPress={prevMonth} hitSlop={8}>
+                <Ionicons name="chevron-back" size={22} color="#0f172a" />
+              </Pressable>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#0f172a' }}>
+                {MONTH_LABELS[displayMonth.getMonth()]} {displayMonth.getFullYear()}
+              </Text>
+              <Pressable onPress={nextMonth} hitSlop={8} disabled={!canGoNext} style={{ opacity: canGoNext ? 1 : 0.35 }}>
+                <Ionicons name="chevron-forward" size={22} color="#0f172a" />
+              </Pressable>
+            </View>
+
+            <View style={{ flexDirection: 'row', marginBottom: 6 }}>
+              {DAY_LABELS.map((label) => (
+                <View key={label} style={{ flex: 1, alignItems: 'center', paddingVertical: 6 }}>
+                  <Text style={{ fontSize: 11, color: '#94a3b8', fontWeight: '500' }}>{label}</Text>
+                </View>
+              ))}
+            </View>
+
+            {Array.from({ length: cells.length / 7 }, (_, rowIndex) => (
+              <View key={rowIndex} style={{ flexDirection: 'row' }}>
+                {cells.slice(rowIndex * 7, rowIndex * 7 + 7).map((day, colIndex) => {
+                  if (!day) {
+                    return <View key={`empty-${rowIndex}-${colIndex}`} style={{ flex: 1, height: 42 }} />;
+                  }
+                  const isFuture = day.getTime() > today.getTime();
+                  const isSelected = selected ? isSameDay(day, selected) : false;
+                  return (
+                    <Pressable
+                      key={`${day.toISOString()}-${colIndex}`}
+                      onPress={() => {
+                        onSelect(day);
+                        setOpen(false);
+                      }}
+                      disabled={isFuture}
+                      style={{
+                        flex: 1,
+                        height: 42,
+                        marginVertical: 2,
+                        marginHorizontal: 1,
+                        borderRadius: 10,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: isSelected ? BRAND : 'transparent',
+                        opacity: isFuture ? 0.35 : 1,
+                      }}
+                    >
+                      <Text style={{ fontSize: 14, color: isSelected ? '#fff' : '#0f172a', fontWeight: isSelected ? '600' : '400' }}>
+                        {day.getDate()}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
-// ─── Material-style clock picker ──────────────────────────────────────────────
+// ─── Time (hour / minute number inputs) ───────────────────────────────────────
 
-const CLOCK_SIZE = 240;
-const CLOCK_R = CLOCK_SIZE / 2;  // 120
-const MARKER_R = 82;             // distance from center to number markers
-const MARKER_SIZE = 36;
-
-// Clock positions: index 0 = 12 o'clock, clockwise
-const HOUR_ORDER = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
-const MINUTE_ORDER = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
-
-function clockPos(index: number): { x: number; y: number } {
-  const angle = (index / 12) * 2 * Math.PI - Math.PI / 2;
-  return {
-    x: CLOCK_R + MARKER_R * Math.cos(angle),
-    y: CLOCK_R + MARKER_R * Math.sin(angle),
-  };
-}
-
-function MaterialClock({
+function TimeNumberInputs({
   hour,
   minute,
   ampm,
@@ -523,229 +707,137 @@ function MaterialClock({
   onMinuteChange: (m: number) => void;
   onAmpmChange: (p: 'AM' | 'PM') => void;
 }) {
-  const [mode, setMode] = useState<'hour' | 'minute'>('hour');
+  const minuteRef = useRef<TextInput>(null);
+  const [hourText, setHourText] = useState(String(hour));
+  const [minuteText, setMinuteText] = useState(minute.toString().padStart(2, '0'));
 
-  const selHourIdx = HOUR_ORDER.indexOf(hour);
-  const nearestMinute = (Math.round(minute / 5) * 5) % 60;
-  const selMinuteIdx = MINUTE_ORDER.indexOf(nearestMinute);
+  useEffect(() => {
+    setHourText(String(hour));
+    setMinuteText(minute.toString().padStart(2, '0'));
+  }, [hour, minute]);
 
-  const selIdx = mode === 'hour' ? selHourIdx : selMinuteIdx;
-  const selPos = clockPos(selIdx >= 0 ? selIdx : 0);
+  const commitHour = () => {
+    const trimmed = hourText.trim();
+    let n = parseInt(trimmed, 10);
+    if (trimmed === '' || Number.isNaN(n)) {
+      n = hour;
+    }
+    n = Math.min(12, Math.max(1, n));
+    onHourChange(n);
+    setHourText(String(n));
+  };
 
-  // Hand: rectangle centered at midpoint of line from clock center → selPos
-  const handAngle =
-    Math.atan2(selPos.y - CLOCK_R, selPos.x - CLOCK_R) * (180 / Math.PI);
-  const midX = (CLOCK_R + selPos.x) / 2;
-  const midY = (CLOCK_R + selPos.y) / 2;
+  const commitMinute = () => {
+    const trimmed = minuteText.trim();
+    let n = parseInt(trimmed, 10);
+    if (trimmed === '' || Number.isNaN(n)) {
+      n = minute;
+    }
+    n = Math.min(59, Math.max(0, n));
+    onMinuteChange(n);
+    setMinuteText(n.toString().padStart(2, '0'));
+  };
+
+  const digitField = {
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    fontSize: 15,
+    fontWeight: '500' as const,
+    color: '#0f172a',
+    textAlign: 'center' as const,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e9edf2',
+  };
 
   return (
-    <View style={{ alignItems: 'center', gap: 20 }}>
-      {/* Digital display + AM/PM */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          backgroundColor: '#fff',
-          borderRadius: 16,
-          paddingHorizontal: 20,
-          paddingVertical: 12,
-          borderWidth: 1,
-          borderColor: '#e9edf2',
-        }}
-      >
-        {/* Hour tab */}
-        <Pressable
-          onPress={() => setMode('hour')}
-          style={{
-            backgroundColor: mode === 'hour' ? BRAND : '#f5f7fa',
-            borderRadius: 10,
-            paddingHorizontal: 14,
-            paddingVertical: 8,
-            minWidth: 58,
-            alignItems: 'center',
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 30,
-              fontWeight: '300',
-              letterSpacing: 1,
-              color: mode === 'hour' ? '#fff' : '#0f172a',
+    <View
+      style={{
+        backgroundColor: '#fff',
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#e9edf2',
+        padding: 14,
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <TextInput
+            value={hourText}
+            onChangeText={(t: string) => {
+              const d = t.replace(/\D/g, '').slice(0, 2);
+              setHourText(d);
+              if (d.length === 2) {
+                const n = parseInt(d, 10);
+                if (!Number.isNaN(n) && n >= 1 && n <= 12) {
+                  onHourChange(n);
+                  minuteRef.current?.focus();
+                }
+              }
             }}
-          >
-            {hour.toString().padStart(2, '0')}
-          </Text>
-        </Pressable>
-
-        <Text style={{ fontSize: 30, fontWeight: '300', color: '#94a3b8', marginHorizontal: 2 }}>
-          :
-        </Text>
-
-        {/* Minute tab */}
-        <Pressable
-          onPress={() => setMode('minute')}
-          style={{
-            backgroundColor: mode === 'minute' ? BRAND : '#f5f7fa',
-            borderRadius: 10,
-            paddingHorizontal: 14,
-            paddingVertical: 8,
-            minWidth: 58,
-            alignItems: 'center',
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 30,
-              fontWeight: '300',
-              letterSpacing: 1,
-              color: mode === 'minute' ? '#fff' : '#0f172a',
+            onBlur={commitHour}
+            onSubmitEditing={() => {
+              commitHour();
+              minuteRef.current?.focus();
             }}
-          >
-            {minute.toString().padStart(2, '0')}
-          </Text>
-        </Pressable>
-
-        {/* AM / PM */}
-        <View style={{ marginLeft: 12, gap: 6 }}>
+            keyboardType="number-pad"
+            maxLength={2}
+            selectTextOnFocus
+            returnKeyType="next"
+            placeholder="12"
+            placeholderTextColor="#94a3b8"
+            style={{ ...digitField, width: 44, minHeight: 48 }}
+          />
+          <Text style={{ fontSize: 15, fontWeight: '500', color: '#94a3b8' }}>:</Text>
+          <TextInput
+            ref={minuteRef}
+            value={minuteText}
+            onChangeText={(t: string) => {
+              const d = t.replace(/\D/g, '').slice(0, 2);
+              setMinuteText(d);
+              if (d.length === 2) {
+                const n = parseInt(d, 10);
+                if (!Number.isNaN(n)) {
+                  const clamped = Math.min(59, Math.max(0, n));
+                  onMinuteChange(clamped);
+                }
+              }
+            }}
+            onBlur={commitMinute}
+            keyboardType="number-pad"
+            maxLength={2}
+            selectTextOnFocus
+            placeholder="00"
+            placeholderTextColor="#94a3b8"
+            style={{ ...digitField, width: 48, minHeight: 48 }}
+          />
+        </View>
+        <View style={{ flex: 1, minWidth: 8 }} />
+        <View style={{ flexDirection: 'row', gap: 8 }}>
           {(['AM', 'PM'] as const).map((p) => (
             <Pressable
               key={p}
+              delayPressIn={0}
               onPress={() => onAmpmChange(p)}
               style={{
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-                borderRadius: 6,
-                backgroundColor: ampm === p ? BRAND : 'transparent',
+                paddingHorizontal: 14,
+                paddingVertical: 14,
+                borderRadius: 12,
+                borderWidth: ampm === p ? 0 : 1,
+                borderColor: '#e9edf2',
+                backgroundColor: ampm === p ? BRAND : '#fff',
+                minWidth: 48,
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: 48,
               }}
             >
-              <Text
-                style={{
-                  fontSize: 13,
-                  fontWeight: '500',
-                  color: ampm === p ? '#fff' : '#94a3b8',
-                }}
-              >
-                {p}
-              </Text>
+              <Text style={{ fontSize: 15, fontWeight: '500', color: ampm === p ? '#fff' : '#0f172a' }}>{p}</Text>
             </Pressable>
           ))}
         </View>
       </View>
-
-      {/* Clock face */}
-      <View
-        style={{
-          width: CLOCK_SIZE,
-          height: CLOCK_SIZE,
-          borderRadius: CLOCK_R,
-          backgroundColor: '#e8f0fe',
-        }}
-      >
-        {/* Hand: rectangle from center to selected marker */}
-        {selIdx >= 0 && (
-          <View
-            style={{
-              position: 'absolute',
-              width: MARKER_R,
-              height: 2,
-              left: midX - MARKER_R / 2,
-              top: midY - 1,
-              backgroundColor: BRAND,
-              borderRadius: 1,
-              transform: [{ rotate: `${handAngle}deg` }],
-            }}
-          />
-        )}
-
-        {/* Center dot */}
-        <View
-          style={{
-            position: 'absolute',
-            width: 10,
-            height: 10,
-            borderRadius: 5,
-            backgroundColor: BRAND,
-            left: CLOCK_R - 5,
-            top: CLOCK_R - 5,
-          }}
-        />
-
-        {/* Hour markers */}
-        {mode === 'hour' &&
-          HOUR_ORDER.map((h, i) => {
-            const { x, y } = clockPos(i);
-            const isSelected = h === hour;
-            return (
-              <Pressable
-                key={h}
-                onPress={() => {
-                  onHourChange(h);
-                  setMode('minute'); // auto-advance to minute mode
-                }}
-                style={{
-                  position: 'absolute',
-                  width: MARKER_SIZE,
-                  height: MARKER_SIZE,
-                  borderRadius: MARKER_SIZE / 2,
-                  backgroundColor: isSelected ? BRAND : 'transparent',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  left: x - MARKER_SIZE / 2,
-                  top: y - MARKER_SIZE / 2,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: isSelected ? '500' : '400',
-                    color: isSelected ? '#fff' : '#1e293b',
-                  }}
-                >
-                  {h}
-                </Text>
-              </Pressable>
-            );
-          })}
-
-        {/* Minute markers */}
-        {mode === 'minute' &&
-          MINUTE_ORDER.map((m, i) => {
-            const { x, y } = clockPos(i);
-            const isSelected = m === nearestMinute;
-            return (
-              <Pressable
-                key={m}
-                onPress={() => onMinuteChange(m)}
-                style={{
-                  position: 'absolute',
-                  width: MARKER_SIZE,
-                  height: MARKER_SIZE,
-                  borderRadius: MARKER_SIZE / 2,
-                  backgroundColor: isSelected ? BRAND : 'transparent',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  left: x - MARKER_SIZE / 2,
-                  top: y - MARKER_SIZE / 2,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 12,
-                    fontWeight: isSelected ? '500' : '400',
-                    color: isSelected ? '#fff' : '#1e293b',
-                  }}
-                >
-                  {m.toString().padStart(2, '0')}
-                </Text>
-              </Pressable>
-            );
-          })}
-      </View>
-
-      {/* Mode hint */}
-      <Text style={{ color: '#94a3b8', fontSize: 12 }}>
-        {mode === 'hour' ? 'Select hour — will advance to minute' : 'Select minute'}
-      </Text>
     </View>
   );
 }
