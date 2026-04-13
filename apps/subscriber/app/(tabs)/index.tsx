@@ -42,7 +42,7 @@ const MOCK_USER = {
   frequency: 'Every 2 weeks',
 };
 
-const HOME_AVATAR_INITIALS = 'SM';
+const HOME_AVATAR_INITIALS = `${MOCK_USER.firstName[0]}${MOCK_USER.lastName[0]}`;
 
 const ROW_V = 12;
 
