@@ -118,12 +118,6 @@ export default function SignInScreen() {
             secureTextEntry
           />
 
-          <Pressable style={{ alignSelf: 'flex-end' }}>
-            <Text style={{ color: BRAND, fontSize: 13, fontWeight: '500' }}>
-              Forgot password?
-            </Text>
-          </Pressable>
-
           <Pressable
             onPress={() => router.replace('/onboarding')}
             style={{
@@ -131,7 +125,7 @@ export default function SignInScreen() {
               borderRadius: 12,
               paddingVertical: 16,
               alignItems: 'center',
-              marginTop: 4,
+              marginTop: 8,
             }}
           >
             <Text style={{ color: '#fff', fontSize: 16, fontWeight: '500' }}>Sign in</Text>

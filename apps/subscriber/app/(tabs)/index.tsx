@@ -318,7 +318,7 @@ export default function HomeScreen() {
             }}
           >
             <Text style={{ fontSize: 17, fontWeight: '500', color: INK }}>Your Medications</Text>
-            <Pressable onPress={() => router.push('/onboarding')} hitSlop={8}>
+            <Pressable onPress={() => router.push('/onboarding?edit=1')} hitSlop={8}>
               <Text style={{ fontSize: 15, fontWeight: '500', color: BRAND }}>Edit</Text>
             </Pressable>
           </View>
