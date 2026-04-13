@@ -1,0 +1,13 @@
+export const BRAND = '#006aff';
+export const PAGE = '#f5f5fa';
+export const INK = '#000000';
+export const MUTED = '#8e8e93';
+export const CARD = '#ffffff';
+export const SUBTLE_GRAY = '#f0f0f5';
+export const BACK_LABEL = '#3c3c43';
+export const CARD_RADIUS = 16;
+export const SCREEN_PAD = 20;
+export const CARD_GAP = 12;
+export const CARD_PAD = 20;
+export const AVATAR_BG = '#d6e8ff';
+export const AVATAR_INK = '#006aff';

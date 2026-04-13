@@ -4,12 +4,14 @@ import { Text, View } from 'react-native';
 
 interface Props {
   onRecordingComplete: (uri: string) => void;
+  onReadyForRecording?: () => void;
 }
 
-export function CameraScreenWeb({ onRecordingComplete }: Props) {
+export function CameraScreenWeb({ onRecordingComplete, onReadyForRecording }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const readyNotifiedRef = useRef(false);
   const [recording, setRecording] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
 
@@ -19,6 +21,10 @@ export function CameraScreenWeb({ onRecordingComplete }: Props) {
       .then((stream) => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+        }
+        if (!readyNotifiedRef.current) {
+          readyNotifiedRef.current = true;
+          onReadyForRecording?.();
         }
       })
       .catch(() => setPermissionDenied(true));
@@ -30,7 +36,7 @@ export function CameraScreenWeb({ onRecordingComplete }: Props) {
           .forEach((t) => t.stop());
       }
     };
-  }, []);
+  }, [onReadyForRecording]);
 
   function startRecording() {
     const stream = videoRef.current?.srcObject as MediaStream | null;

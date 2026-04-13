@@ -1,3 +1,4 @@
+import { BrandLogo } from '../../components/BrandLogo';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -26,7 +27,7 @@ function FocusInput({ label, style, ...props }: FocusInputProps) {
     <View
       style={{
         borderWidth: focused ? 2 : 1,
-        borderColor: focused ? BRAND : '#e2e8f0',
+        borderColor: focused ? BRAND : '#e9edf2',
         borderRadius: 12,
         paddingHorizontal: 16,
         paddingTop: 11,
@@ -37,7 +38,7 @@ function FocusInput({ label, style, ...props }: FocusInputProps) {
       <Text
         style={{
           fontSize: 10,
-          fontWeight: '700',
+          fontWeight: '500',
           letterSpacing: 0.6,
           color: focused ? BRAND : '#94a3b8',
           marginBottom: 4,
@@ -79,7 +80,10 @@ export default function SignUpScreen() {
       >
         {/* Dark header */}
         <View style={{ alignItems: 'center', paddingTop: 32, paddingBottom: 28 }}>
-          <Text style={{ color: '#fff', fontSize: 26, fontWeight: '800', letterSpacing: -0.5 }}>
+          <View style={{ marginBottom: 18 }}>
+            <BrandLogo size={64} />
+          </View>
+          <Text style={{ color: '#fff', fontSize: 26, fontWeight: '500', letterSpacing: -0.5 }}>
             Create account
           </Text>
           <Text style={{ color: '#64748b', fontSize: 14, marginTop: 6 }}>
@@ -151,13 +155,13 @@ export default function SignUpScreen() {
               marginTop: 4,
             }}
           >
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Create account</Text>
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '500' }}>Create account</Text>
           </Pressable>
 
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4 }}>
             <Text style={{ color: '#94a3b8', fontSize: 14 }}>Already have an account?</Text>
             <Pressable onPress={() => router.back()}>
-              <Text style={{ color: BRAND, fontSize: 14, fontWeight: '600' }}>Sign in</Text>
+              <Text style={{ color: BRAND, fontSize: 14, fontWeight: '500' }}>Sign in</Text>
             </Pressable>
           </View>
         </ScrollView>

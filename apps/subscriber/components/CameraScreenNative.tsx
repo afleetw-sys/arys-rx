@@ -1,16 +1,24 @@
 import { Button } from '@arys-rx/ui';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 
 interface Props {
   onRecordingComplete: (uri: string) => void;
+  onReadyForRecording?: () => void;
 }
 
-export function CameraScreenNative({ onRecordingComplete }: Props) {
+export function CameraScreenNative({ onRecordingComplete, onReadyForRecording }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
   const [recording, setRecording] = useState(false);
   const cameraRef = useRef<CameraView>(null);
+  const readyNotifiedRef = useRef(false);
+
+  useEffect(() => {
+    if (!permission?.granted || readyNotifiedRef.current) return;
+    readyNotifiedRef.current = true;
+    onReadyForRecording?.();
+  }, [permission?.granted, onReadyForRecording]);
 
   if (!permission) {
     return <View className="flex-1 bg-black" />;

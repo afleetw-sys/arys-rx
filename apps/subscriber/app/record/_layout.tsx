@@ -4,13 +4,12 @@ export default function RecordLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: '#0f172a' },
-        headerTintColor: '#fff',
+        headerShown: false,
         presentation: 'fullScreenModal',
       }}
     >
-      <Stack.Screen name="camera" options={{ title: 'Record Dose' }} />
-      <Stack.Screen name="review" options={{ title: 'Review & Submit' }} />
+      <Stack.Screen name="camera" />
+      <Stack.Screen name="review" />
     </Stack>
   );
 }
