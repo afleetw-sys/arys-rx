@@ -159,6 +159,26 @@ export function mergePendingWithProfile(
     }
   }
 
+  const now = new Date();
+  for (let index = 0; index < ASSIGNED_MEDS.length; index += 1) {
+    const med = ASSIGNED_MEDS[index];
+    if (byDrug.has(med.id)) continue;
+    const fallbackDate = new Date(now);
+    fallbackDate.setDate(fallbackDate.getDate() + index + 1);
+    fallbackDate.setHours(8 + index, 0, 0, 0);
+    byDrug.set(med.id, {
+      id: `local-pending-${med.id}`,
+      subscriberId: MOCK_SUBSCRIBER_ID,
+      drugId: med.id,
+      drugName: med.name,
+      scheduledAt: fallbackDate.toISOString(),
+      takenAt: null,
+      status: 'pending',
+      videoId: null,
+      notes: null,
+    });
+  }
+
   return [...byDrug.values()].sort(
     (a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()
   );

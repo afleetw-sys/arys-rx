@@ -50,34 +50,36 @@ function medicationListMeta(
   profile: SavedSubscriberSchedule | null,
   pending: AdherenceRecord[]
 ): { drugId: string; drugName: string; dosage: string; frequencyLabel: string }[] {
-  if (profile?.medications.length) {
-    return profile.medications.map((m) => ({
+  const profileByDrug = new Map(
+    (profile?.medications ?? []).map((m) => [m.drugId, m] as const)
+  );
+  const pendingByDrug = new Map<string, AdherenceRecord>();
+  for (const r of pending) {
+    if (!pendingByDrug.has(r.drugId)) pendingByDrug.set(r.drugId, r);
+  }
+
+  const baseList = ASSIGNED_MEDS.map((assigned) => {
+    const saved = profileByDrug.get(assigned.id);
+    const fromPending = pendingByDrug.get(assigned.id);
+    return {
+      drugId: assigned.id,
+      drugName: saved?.drugName ?? fromPending?.drugName ?? assigned.name,
+      dosage: saved?.dosage ?? assigned.dosage,
+      frequencyLabel: saved?.frequencyLabel ?? (assigned.id === 'drug-001' ? MOCK_USER.frequency : 'Weekly'),
+    };
+  });
+
+  const knownDrugIds = new Set<string>(baseList.map((m) => m.drugId));
+  const extrasFromProfile = (profile?.medications ?? [])
+    .filter((m) => !knownDrugIds.has(m.drugId))
+    .map((m) => ({
       drugId: m.drugId,
       drugName: m.drugName,
       dosage: m.dosage,
       frequencyLabel: m.frequencyLabel,
     }));
-  }
-  const seen = new Map<string, { drugId: string; drugName: string; dosage: string; frequencyLabel: string }>();
-  for (const r of pending) {
-    if (!seen.has(r.drugId)) {
-      seen.set(r.drugId, {
-        drugId: r.drugId,
-        drugName: r.drugName,
-        dosage: assignedMedDosage(r.drugId),
-        frequencyLabel: '',
-      });
-    }
-  }
-  if (seen.size === 0) {
-    return ASSIGNED_MEDS.map((m) => ({
-      drugId: m.id,
-      drugName: m.name,
-      dosage: m.dosage,
-      frequencyLabel: m.id === 'drug-001' ? MOCK_USER.frequency : 'Weekly',
-    }));
-  }
-  return Array.from(seen.values());
+
+  return [...baseList, ...extrasFromProfile];
 }
 
 function usualTimeLabel(
