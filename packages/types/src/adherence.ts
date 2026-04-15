@@ -16,6 +16,8 @@ export interface AdherenceSummary {
   subscriberId: string;
   drugId: string;
   drugName: string;
+  /** Count of active medications on the program (may exceed rows keyed by primary drug). */
+  medicationCount: number;
   totalDoses: number;
   takenDoses: number;
   adherenceRate: number;
