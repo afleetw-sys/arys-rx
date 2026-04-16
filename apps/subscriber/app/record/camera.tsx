@@ -2,7 +2,7 @@ import { BRAND, CARD, INK, MUTED, SCREEN_PAD } from '../../lib/subscriberTheme';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { submitAdherenceRecord } from '../../lib/api';
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Animated, Easing, Platform, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraScreenNative } from '../../components/CameraScreenNative';
@@ -22,6 +22,44 @@ function wait(ms: number) {
   });
 }
 
+// Own tree + memo: parent step changes must not re-render the native rotation loop.
+const ReviewProcessingSpinner = memo(
+  function ReviewProcessingSpinner() {
+    const rotation = useRef(new Animated.Value(0)).current;
+    const spin = useMemo(
+      () =>
+        rotation.interpolate({
+          inputRange: [0, 1],
+          outputRange: ['0deg', '360deg'],
+        }),
+      [rotation],
+    );
+
+    useEffect(() => {
+      rotation.setValue(0);
+      const anim = Animated.loop(
+        Animated.timing(rotation, {
+          toValue: 1,
+          duration: 1600,
+          easing: Easing.linear,
+          useNativeDriver: true,
+        }),
+      );
+      anim.start();
+      return () => anim.stop();
+    }, [rotation]);
+
+    return (
+      <View style={{ marginTop: 16 }}>
+        <Animated.View style={{ transform: [{ rotate: spin }] }}>
+          <Ionicons name="sync-outline" size={20} color={BRAND} />
+        </Animated.View>
+      </View>
+    );
+  },
+  () => true,
+);
+
 export default function CameraScreen() {
   const insets = useSafeAreaInsets();
   const [showInstructions, setShowInstructions] = useState(true);
@@ -30,7 +68,6 @@ export default function CameraScreen() {
   const [reviewStatus, setReviewStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [currentReviewStep, setCurrentReviewStep] = useState(0);
   const [reviewError, setReviewError] = useState<string | null>(null);
-  const spinnerRotation = useRef(new Animated.Value(0)).current;
 
   async function runReviewSubmission() {
     setReviewStatus('processing');
@@ -72,28 +109,6 @@ export default function CameraScreen() {
     }, 900);
     return () => clearTimeout(timer);
   }, [isPreparingCamera]);
-
-  useEffect(() => {
-    if (reviewStatus !== 'processing') return;
-    spinnerRotation.setValue(0);
-    const animation = Animated.loop(
-      Animated.timing(spinnerRotation, {
-        toValue: 1,
-        duration: 1600,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
-    );
-    animation.start();
-    return () => {
-      animation.stop();
-    };
-  }, [reviewStatus, spinnerRotation]);
-
-  const spinnerInterpolate = spinnerRotation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
 
   return (
     <View style={{ flex: 1, backgroundColor: '#000000' }}>
@@ -435,13 +450,7 @@ export default function CameraScreen() {
                     : reviewError}
               </Text>
 
-              {reviewStatus === 'processing' ? (
-                <View style={{ marginTop: 16 }}>
-                  <Animated.View style={{ transform: [{ rotate: spinnerInterpolate }] }}>
-                    <Ionicons name="sync-outline" size={20} color={BRAND} />
-                  </Animated.View>
-                </View>
-              ) : null}
+              {reviewStatus === 'processing' ? <ReviewProcessingSpinner /> : null}
 
               {reviewStatus === 'error' ? (
                 <Pressable

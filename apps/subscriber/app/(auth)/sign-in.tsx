@@ -56,7 +56,11 @@ function FocusInput({ label, style, ...props }: FocusInputProps) {
           props.onBlur?.(e);
         }}
         placeholderTextColor="#cbd5e1"
-        style={[{ color: '#0f172a', fontSize: 15 }, style]}
+        style={[
+          { color: '#0f172a', fontSize: 15 },
+          Platform.OS === 'web' && { outlineStyle: 'none', outlineWidth: 0 },
+          style,
+        ]}
       />
     </View>
   );

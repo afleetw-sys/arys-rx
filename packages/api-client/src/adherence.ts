@@ -2,7 +2,8 @@ import type { AdherenceRecord, AdherenceSummary } from '@arys-rx/types';
 import {
   MOCK_ADHERENCE_RECORDS,
   MOCK_ADHERENCE_SUMMARY,
-  MOCK_MEMBER_SUMMARIES,
+  MOCK_MEMBER_SUMMARIES_HR,
+  MOCK_MEMBER_SUMMARIES_PBM,
 } from './mock-data';
 
 export async function getAdherenceHistory(subscriberId: string): Promise<AdherenceRecord[]> {
@@ -16,11 +17,11 @@ export async function getAdherenceSummary(subscriberId: string): Promise<Adheren
   return MOCK_ADHERENCE_SUMMARY;
 }
 
-export async function getAllMemberSummaries(): Promise<
-  (import('@arys-rx/types').User & { summary: AdherenceSummary })[]
-> {
+export async function getAllMemberSummaries(
+  portal: 'hr' | 'pbm',
+): Promise<(import('@arys-rx/types').User & { summary: AdherenceSummary })[]> {
   await delay();
-  return MOCK_MEMBER_SUMMARIES;
+  return portal === 'hr' ? MOCK_MEMBER_SUMMARIES_HR : MOCK_MEMBER_SUMMARIES_PBM;
 }
 
 export async function submitAdherenceRecord(input: {

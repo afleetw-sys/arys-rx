@@ -1,94 +1,67 @@
-import { getAllMemberSummaries } from '@/lib/api';
 import { AdherenceRateBadge } from '@/components/AdherenceRateBadge';
-import Link from 'next/link';
+import { DashboardTableCard } from '@/components/DashboardTableCard';
+import { MemberOnTrackBadge } from '@/components/MemberOnTrackBadge';
+import { ProgramOverview } from '@/components/ProgramOverview';
+import { SendReminderButton } from '@/components/SendReminderButton';
+import { loadDashboardRoster } from '@/lib/dashboard-load';
+import { pageStackClass, rosterTableClass, sectionIntroClass, tdClass, thClass, thRowClass, trClass } from '@/lib/dashboard-ui';
+import { formatMedicationCount, safeAdherenceRate } from '@/lib/member-summary';
+import { sortMembersForPortal } from '@/lib/roster-sort';
+import { subscriberDisplayName } from '@/lib/subscriber-display-name';
 
 export default async function HrMembersPage() {
-  const members = await getAllMemberSummaries();
+  const { members, metrics } = await loadDashboardRoster('hr');
+  const sorted = sortMembersForPortal('hr', members);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-neutral-900">Members</h1>
-        <p className="text-neutral-500 text-sm mt-1">Adherence overview for your plan members</p>
-      </div>
+    <div className={pageStackClass}>
+      <ProgramOverview metrics={metrics} />
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-3 gap-4">
-        <StatCard label="Total members" value={members.length} />
-        <StatCard
-          label="On track (≥80%)"
-          value={members.filter((m) => m.summary.adherenceRate >= 80).length}
-          highlight
-        />
-        <StatCard
-          label="At risk (<80%)"
-          value={members.filter((m) => m.summary.adherenceRate < 80).length}
-          danger
-        />
-      </div>
+      <section className={sectionIntroClass}>
+        <div>
+          <h2 className="text-xl font-semibold text-neutral-900">Member adherence</h2>
+          <p className="mt-1 text-sm text-neutral-500">
+            Plan-level adherence and engagement for your covered population.
+          </p>
+        </div>
 
-      {/* Member table */}
-      <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-neutral-100 bg-neutral-50">
-              <th className="text-left px-4 py-3 font-medium text-neutral-500">Member</th>
-              <th className="text-left px-4 py-3 font-medium text-neutral-500">Drug</th>
-              <th className="text-left px-4 py-3 font-medium text-neutral-500">Adherence</th>
-              <th className="text-left px-4 py-3 font-medium text-neutral-500">Last dose</th>
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((m) => (
-              <tr
-                key={m.id}
-                className="border-b border-neutral-100 last:border-0 hover:bg-neutral-50 transition-colors"
-              >
-                <td className="px-4 py-3">
-                  <Link href={`/hr/members/${m.id}`} className="font-medium text-brand-600 hover:underline">
-                    {m.firstName} {m.lastName}
-                  </Link>
-                  <div className="text-neutral-400 text-xs">{m.email}</div>
-                </td>
-                <td className="px-4 py-3 text-neutral-700">{m.summary.drugName}</td>
-                <td className="px-4 py-3">
-                  <AdherenceRateBadge rate={m.summary.adherenceRate} />
-                </td>
-                <td className="px-4 py-3 text-neutral-500">
-                  {m.summary.lastTakenAt
-                    ? new Date(m.summary.lastTakenAt).toLocaleDateString()
-                    : '—'}
-                </td>
+        <DashboardTableCard>
+          <table className={rosterTableClass}>
+            <thead>
+              <tr className={thRowClass}>
+                <th className={thClass}>Member</th>
+                <th className={thClass}>Medications</th>
+                <th className={thClass}>Adherence</th>
+                <th className={thClass}>Status</th>
+                <th className={thClass}>Reminder</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  highlight,
-  danger,
-}: {
-  label: string;
-  value: number;
-  highlight?: boolean;
-  danger?: boolean;
-}) {
-  return (
-    <div className="bg-white rounded-2xl border border-neutral-200 p-4">
-      <div
-        className={`text-3xl font-bold ${
-          highlight ? 'text-success-600' : danger ? 'text-danger-600' : 'text-neutral-900'
-        }`}
-      >
-        {value}
-      </div>
-      <div className="text-neutral-500 text-sm mt-1">{label}</div>
+            </thead>
+            <tbody>
+              {sorted.map((m) => {
+                const rate = safeAdherenceRate(m.summary);
+                const displayName = subscriberDisplayName(m.id, m);
+                return (
+                  <tr key={m.id} className={trClass}>
+                    <td className={`${tdClass} font-medium text-neutral-800`}>{displayName}</td>
+                    <td className={`${tdClass} tabular-nums text-neutral-700`}>
+                      {formatMedicationCount(m.summary)}
+                    </td>
+                    <td className={tdClass}>
+                      <AdherenceRateBadge rate={rate} />
+                    </td>
+                    <td className={tdClass}>
+                      <MemberOnTrackBadge onTrack={rate >= 80} />
+                    </td>
+                    <td className={tdClass}>
+                      <SendReminderButton subscriberId={m.id} displayName={displayName} />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </DashboardTableCard>
+      </section>
     </div>
   );
 }

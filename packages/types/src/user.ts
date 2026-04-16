@@ -7,6 +7,8 @@ export interface User {
   lastName: string;
   role: Role;
   createdAt: string;
+  /** Employer / plan sponsor (subscribers on a PBM roster). */
+  companyName?: string;
 }
 
 export interface SubscriberProfile {
