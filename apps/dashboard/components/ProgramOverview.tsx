@@ -36,50 +36,58 @@ function IconCheck() {
   );
 }
 
+function InfoTooltip({ text }: { text: string }) {
+  return (
+    <span className="relative inline-flex">
+      <span
+        className="group inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full text-neutral-400 hover:text-neutral-600 focus-visible:text-neutral-600"
+        tabIndex={0}
+        aria-label="Metric definition"
+      >
+        <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+          <circle cx="10" cy="10" r="7.25" />
+          <circle cx="10" cy="6.5" r="0.75" fill="currentColor" stroke="none" />
+          <path d="M10 9v4.5" strokeLinecap="round" />
+        </svg>
+        <span
+          role="tooltip"
+          className="pointer-events-none absolute left-1/2 top-[calc(100%+0.5rem)] z-10 w-56 -translate-x-1/2 rounded-lg bg-neutral-900 px-3 py-2 text-xs font-medium leading-4 text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+        >
+          {text}
+        </span>
+      </span>
+    </span>
+  );
+}
+
 function MetricCard({
   title,
   value,
-  subtitle,
-  subtitleSuccess,
+  tooltipText,
   iconBoxClass,
   icon,
 }: {
   title: string;
   value: string;
-  subtitle: React.ReactNode;
-  subtitleSuccess?: boolean;
+  tooltipText?: string;
   iconBoxClass: string;
   icon: React.ReactNode;
 }) {
   return (
     <div className="min-w-0 rounded-2xl bg-white p-5 ring-1 ring-neutral-200/70 sm:p-6">
       <div className="flex justify-between items-start gap-3">
-        <span className="text-sm font-medium text-neutral-500">{title}</span>
+        <div>
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-neutral-600">
+            {title}
+            {tooltipText ? <InfoTooltip text={tooltipText} /> : null}
+          </span>
+          <p className="mt-2 text-xl font-semibold tracking-tight text-neutral-900 tabular-nums sm:text-2xl">{value}</p>
+        </div>
         <div
           className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconBoxClass}`}
         >
           {icon}
         </div>
-      </div>
-      <p className="mt-4 text-3xl font-bold tracking-tight text-neutral-900 tabular-nums sm:text-4xl">{value}</p>
-      <div
-        className={`mt-2 flex items-center gap-1.5 text-sm ${
-          subtitleSuccess ? 'text-success-600 font-medium' : 'text-neutral-500'
-        }`}
-      >
-        {subtitleSuccess ? (
-          <svg
-            className="w-4 h-4 shrink-0 text-success-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-            aria-hidden
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
-          </svg>
-        ) : null}
-        {subtitle}
       </div>
     </div>
   );
@@ -93,22 +101,19 @@ export function ProgramOverview({ metrics }: Props) {
       <MetricCard
         title="Enrolled Members"
         value={String(enrolledCount)}
-        subtitle="Active in program"
-        subtitleSuccess
         iconBoxClass="bg-sky-50 text-sky-600"
         icon={<IconPeople />}
       />
       <MetricCard
         title="Average Adherence"
         value={`${averageAdherence}%`}
-        subtitle="Across all members"
         iconBoxClass="bg-emerald-50 text-emerald-600"
         icon={<IconTrendUp />}
       />
       <MetricCard
         title="Program Compliance"
         value={`${videoVerificationRate}%`}
-        subtitle="Verified dose rate"
+        tooltipText="Percent of all logged doses that include successful video verification."
         iconBoxClass="bg-violet-50 text-violet-600"
         icon={<IconCheck />}
       />

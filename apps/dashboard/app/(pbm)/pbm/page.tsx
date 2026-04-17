@@ -21,7 +21,7 @@ export default async function PbmPatientsPage() {
         <div>
           <h2 className="text-xl font-semibold text-neutral-900">Patients</h2>
           <p className="mt-1 text-sm text-neutral-500">
-            Book of business across employer groups — adherence, medications, and recent activity.
+            View patients across employer groups with adherence, medication, and recent activity insights.
           </p>
         </div>
 
