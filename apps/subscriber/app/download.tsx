@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { BrandLogo } from '../components/BrandLogo';
 import { router } from 'expo-router';
-import { SafeAreaView, Text, View } from 'react-native';
+import { useCallback, useRef } from 'react';
+import { SafeAreaView, ScrollView, Text, View } from 'react-native';
 
 const IOS_BLUE = '#0a84ff';
 
@@ -46,6 +47,11 @@ function KeyRow({
 }
 
 export default function DownloadScreen() {
+  const threadScrollRef = useRef<ScrollView>(null);
+  const scrollThreadToEnd = useCallback(() => {
+    threadScrollRef.current?.scrollToEnd({ animated: false });
+  }, []);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#000' }}>
       {/* Status bar */}
@@ -130,14 +136,27 @@ export default function DownloadScreen() {
         <View style={{ width: 32 }} />
       </View>
 
-      {/* Message thread */}
-      <View style={{ flex: 1, paddingHorizontal: 14, paddingTop: 14, gap: 6 }}>
-        {/* Timestamp */}
+      {/* Message thread: anchor to bottom on short viewports; scroll up for earlier text */}
+      <ScrollView
+        ref={threadScrollRef}
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'flex-end',
+          paddingHorizontal: 14,
+          paddingTop: 14,
+          paddingBottom: 16,
+          gap: 6,
+        }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        onContentSizeChange={scrollThreadToEnd}
+        onLayout={scrollThreadToEnd}
+      >
         <Text style={{ color: '#636366', fontSize: 11, textAlign: 'center', marginBottom: 6 }}>
           Today 9:14 AM
         </Text>
 
-        {/* SMS bubble */}
         <View
           style={{
             backgroundColor: '#1c1c1e',
@@ -163,10 +182,7 @@ export default function DownloadScreen() {
             <Text style={{ color: IOS_BLUE }}>1-800-ARYS-RX</Text>
           </Text>
         </View>
-
-        {/* Delivered */}
-        <Text style={{ color: '#636366', fontSize: 11, marginLeft: 4 }}>Delivered</Text>
-      </View>
+      </ScrollView>
 
       {/* Compose bar */}
       <View
