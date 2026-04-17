@@ -1,6 +1,7 @@
 import { Button } from '@arys-rx/ui';
-import { useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
 
 interface Props {
   onRecordingComplete: (uri: string) => void;
@@ -14,11 +15,28 @@ export function CameraScreenWeb({ onRecordingComplete, onReadyForRecording }: Pr
   const readyNotifiedRef = useRef(false);
   const [recording, setRecording] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+
+  const stopPreviewTracks = useCallback(() => {
+    const stream = videoRef.current?.srcObject as MediaStream | null;
+    stream?.getTracks().forEach((t) => t.stop());
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  }, []);
 
   useEffect(() => {
+    let cancelled = false;
     navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'user' }, audio: true })
+      .getUserMedia({
+        video: { facingMode: { ideal: facingMode } },
+        audio: true,
+      })
       .then((stream) => {
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
@@ -30,13 +48,10 @@ export function CameraScreenWeb({ onRecordingComplete, onReadyForRecording }: Pr
       .catch(() => setPermissionDenied(true));
 
     return () => {
-      if (videoRef.current?.srcObject) {
-        (videoRef.current.srcObject as MediaStream)
-          .getTracks()
-          .forEach((t) => t.stop());
-      }
+      cancelled = true;
+      stopPreviewTracks();
     };
-  }, [onReadyForRecording]);
+  }, [facingMode, onReadyForRecording, stopPreviewTracks]);
 
   function startRecording() {
     const stream = videoRef.current?.srcObject as MediaStream | null;
@@ -69,7 +84,7 @@ export function CameraScreenWeb({ onRecordingComplete, onReadyForRecording }: Pr
   }
 
   return (
-    <View className="flex-1 bg-black items-center justify-center gap-6">
+    <View className="flex-1 bg-black items-center justify-center gap-6 px-4">
       <video
         ref={videoRef}
         autoPlay
@@ -77,11 +92,35 @@ export function CameraScreenWeb({ onRecordingComplete, onReadyForRecording }: Pr
         playsInline
         style={{ width: '100%', maxWidth: 480, borderRadius: 16, background: '#000' }}
       />
-      <Button
-        label={recording ? 'Stop Recording' : 'Start Recording'}
-        onPress={recording ? stopRecording : startRecording}
-        variant={recording ? 'danger' : 'primary'}
-      />
+      <View className="w-full max-w-[480px] flex-row items-center justify-between gap-4">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Flip camera"
+          disabled={recording}
+          onPress={() =>
+            setFacingMode((prev) => (prev === 'user' ? 'environment' : 'user'))
+          }
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 24,
+            backgroundColor: 'rgba(255,255,255,0.14)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: recording ? 0.35 : 1,
+          }}
+        >
+          <Ionicons name="camera-reverse-outline" size={24} color="#ffffff" />
+        </Pressable>
+        <View className="flex-1 items-center">
+          <Button
+            label={recording ? 'Stop Recording' : 'Start Recording'}
+            onPress={recording ? stopRecording : startRecording}
+            variant={recording ? 'danger' : 'primary'}
+          />
+        </View>
+        <View style={{ width: 48 }} />
+      </View>
     </View>
   );
 }

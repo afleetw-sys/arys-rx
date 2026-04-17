@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, SafeAreaView, ScrollView, Text, TextInput, View } from 'react-native';
 import { ASSIGNED_MEDS, FREQUENCY_OPTIONS } from '../lib/assignedMedications';
 import { saveSubscriberScheduleFromConfigs } from '../lib/subscriberSchedule';
@@ -60,6 +60,13 @@ export default function OnboardingScreen() {
   const { edit } = useLocalSearchParams<{ edit?: string | string[] }>();
   const isEditingSchedule = isEditScheduleParam(edit);
 
+  const scheduleScrollRef = useRef<ScrollView>(null);
+  const scrollScheduleToBottom = useCallback(() => {
+    requestAnimationFrame(() => {
+      scheduleScrollRef.current?.scrollToEnd({ animated: true });
+    });
+  }, []);
+
   const [phase, setPhase] = useState<Phase>({ kind: 'intro' });
   const [scheduleSubmitAttempted, setScheduleSubmitAttempted] = useState(false);
   const [medConfigs, setMedConfigs] = useState<MedConfig[]>(
@@ -87,6 +94,14 @@ export default function OnboardingScreen() {
     }
   }, [phase, currentValidationMessage]);
 
+  const medFreqForScroll =
+    phase.kind === 'med' ? (medConfigs[phase.medIndex]?.frequency ?? null) : null;
+
+  useEffect(() => {
+    if (!medFreqForScroll) return;
+    scrollScheduleToBottom();
+  }, [medFreqForScroll, scrollScheduleToBottom]);
+
   async function advance() {
     if (phase.kind === 'intro') {
       setScheduleSubmitAttempted(false);
@@ -96,6 +111,7 @@ export default function OnboardingScreen() {
     const msg = validationMessage(phase, medConfigs);
     if (msg) {
       setScheduleSubmitAttempted(true);
+      scrollScheduleToBottom();
       return;
     }
     setScheduleSubmitAttempted(false);
@@ -191,6 +207,8 @@ export default function OnboardingScreen() {
         }}
       >
         <ScrollView
+          ref={scheduleScrollRef}
+          style={{ flex: 1 }}
           contentContainerStyle={{ padding: 24, paddingBottom: 8 }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
